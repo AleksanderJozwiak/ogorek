@@ -1,4 +1,3 @@
-using System.Collections;
 using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
@@ -9,55 +8,53 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float shipRotationSpeed = 100f;
     [SerializeField] private float bulletSpeed = 8f;
 
-    [Header("Object refereneces")]
+    [Header("Object references")]
     [SerializeField] private Transform bulletSpawn;
 
     private Rigidbody2D shipRigidbody;
-    private bool isAlive = true;
-    private bool isAccelerating = false;
 
+    float thrustInput; 
+    float turnInput;  
+
+    private bool isAlive = true;
 
     private void Start()
     {
         shipRigidbody = GetComponent<Rigidbody2D>();
     }
 
-
     private void Update()
     {
-        if (isAlive)
-        {
-            HandleShipAcceleration();
-            HandleShipRotation();
-            HandleShooting();
-        }
+        if (!isAlive) return;
+
+        HandleInputs();
+        HandleShooting();
     }
 
     private void FixedUpdate()
     {
-        if (isAlive && isAccelerating)
-        {
-            shipRigidbody.AddForce(shipAcceleration * transform.up);
-            shipRigidbody.linearVelocity = Vector2.ClampMagnitude(shipRigidbody.linearVelocity, shipMaxVelocity);
+        if (!isAlive) return;
 
+        float rotationDelta = turnInput * shipRotationSpeed * Time.fixedDeltaTime;
+        shipRigidbody.MoveRotation(shipRigidbody.rotation + rotationDelta);
+
+        if (Mathf.Abs(thrustInput) > 0f)
+        {
+            shipRigidbody.AddForce(shipAcceleration * thrustInput * (Vector2)transform.up, ForceMode2D.Force);
         }
+
+        shipRigidbody.linearVelocity = Vector2.ClampMagnitude(shipRigidbody.linearVelocity, shipMaxVelocity);
     }
 
-    private void HandleShipAcceleration()
+    private void HandleInputs()
     {
-        isAccelerating = Input.GetKey(KeyCode.UpArrow);
-    }
+        thrustInput = 0f;
+        if (Input.GetKey(KeyCode.W)) thrustInput += 1f;
+        if (Input.GetKey(KeyCode.S)) thrustInput -= 1f;
 
-    private void HandleShipRotation()
-    {
-        if (Input.GetKey(KeyCode.LeftArrow))
-        {
-            transform.Rotate(shipRotationSpeed * Time.deltaTime * transform.forward);
-        }
-        else if (Input.GetKey(KeyCode.RightArrow))
-        {
-            transform.Rotate(-shipRotationSpeed * Time.deltaTime * transform.forward);
-        }
+        turnInput = 0f;
+        if (Input.GetKey(KeyCode.A)) turnInput += 1f;
+        if (Input.GetKey(KeyCode.D)) turnInput -= 1f;
     }
 
     private void HandleShooting()
@@ -73,16 +70,10 @@ public class PlayerMovement : MonoBehaviour
 
             Vector2 shipVelocity = shipRigidbody.linearVelocity;
             Vector2 shipDirection = transform.up;
-            float shipForwardSpeed = Vector2.Dot(shipVelocity, shipDirection);
-
-            if (shipForwardSpeed < 0)
-            {
-                shipForwardSpeed = 0;
-            }
+            float shipForwardSpeed = Mathf.Max(0f, Vector2.Dot(shipVelocity, shipDirection));
 
             rb.linearVelocity = shipDirection * shipForwardSpeed;
             rb.AddForce(bulletSpeed * (Vector2)transform.up, ForceMode2D.Impulse);
-
         }
     }
 }
