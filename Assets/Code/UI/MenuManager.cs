@@ -20,18 +20,19 @@ public class MenuManager : MonoBehaviour
 
     private Coroutine refreshRoutine;
 
-    private void OnEnable()
+    private void Start()
     {
-        refreshRoutine = StartCoroutine(AutoRefreshLobbyList());
+        StartCoroutine(WaitForLobbyManager());
+        if (LobbyManager.Instance != null)
+            refreshRoutine = StartCoroutine(AutoRefreshLobbyList());
     }
 
-    private void OnDisable()
+    private IEnumerator WaitForLobbyManager()
     {
-        if (refreshRoutine != null)
-        {
-            StopCoroutine(refreshRoutine);
-            refreshRoutine = null;
-        }
+        while (LobbyManager.Instance == null)
+            yield return null;
+
+        LobbyManager.Instance.OnLobbyListUpdated += RefreshLobbyList;
     }
 
     private IEnumerator AutoRefreshLobbyList()
@@ -46,6 +47,17 @@ public class MenuManager : MonoBehaviour
             }
             yield return new WaitForSeconds(5f);
         }
+    }
+
+    private void OnDisable()
+    {
+        if (refreshRoutine != null)
+        {
+            StopCoroutine(refreshRoutine);
+            refreshRoutine = null;
+        }
+        if (LobbyManager.Instance != null)
+            LobbyManager.Instance.OnLobbyListUpdated -= RefreshLobbyList;
     }
 
     public void ToogleCanvasGroup(CanvasGroup canvasGroup)
@@ -79,6 +91,35 @@ public class MenuManager : MonoBehaviour
         LobbyManager.Instance.CreateLobby(friendsOnly.isOn);
     }
 
+
+    public void HidePanel(CanvasGroup canvasGroup)
+    {
+        canvasGroup.alpha = 0;
+        canvasGroup.interactable = false;
+        canvasGroup.blocksRaycasts = false;
+    }
+    private void HideAllPanels()
+    {
+        HidePanel(MainMenuPanel);
+        HidePanel(LobbyPanel);
+        HidePanel(LobbyBrowserPanel);
+    }
+
+    public void ShowLobbyBrowserAfterHostLeft()
+    {
+        HideAllPanels();
+        ToogleCanvasGroup(LobbyBrowserPanel);
+        LobbyManager.Instance.RequestLobbyList();
+        var list = LobbyManager.Instance.GetFoundLobbies();
+        RefreshLobbyList(list);
+    }
+
+    public void OpenLobbyPanel()
+    {
+        HideAllPanels();
+        ToogleCanvasGroup(LobbyPanel);
+    }
+
     private void RefreshLobbyList(List<CSteamID> lobbies)
     {
         foreach (Transform child in lobbyListContainer) Destroy(child.gameObject);
@@ -90,14 +131,19 @@ public class MenuManager : MonoBehaviour
             var btn = go.GetComponent<Button>();
 
             string name = SteamMatchmaking.GetLobbyData(lobbyId, "name");
-            string players = SteamMatchmaking.GetLobbyData(lobbyId, "players");
+            int players = LobbyManager.Instance.GetLobbyPlayerCount(lobbyId);
 
             var lobbName = texts.FirstOrDefault(x => x.name == "HostName");
             var playerCount = texts.FirstOrDefault(x => x.name == "PlayerCount");
             lobbName.text = $"{name}";
             playerCount.text = $"{players}/18";
 
-            btn.onClick.AddListener(() => LobbyManager.Instance.JoinLobby(lobbyId));
+            btn.onClick.AddListener(() =>
+            {
+                LobbyManager.Instance.JoinLobby(lobbyId);
+                HideAllPanels();
+                ToogleCanvasGroup(LobbyPanel);
+            });
         }
     }
 
