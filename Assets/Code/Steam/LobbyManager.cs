@@ -1,7 +1,8 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Steamworks;
+using System.Net.NetworkInformation;
 
 public class LobbyManager : MonoBehaviour
 {
@@ -36,7 +37,7 @@ public class LobbyManager : MonoBehaviour
     }
 
     #region Create / Leave
-    public void CreateLobby(string lobbyName, bool friendsOnly = false)
+    public void CreateLobby(bool friendsOnly = false)
     {
         ELobbyType type = friendsOnly ? ELobbyType.k_ELobbyTypeFriendsOnly : ELobbyType.k_ELobbyTypePublic;
         SteamMatchmaking.CreateLobby(type, MAX_PLAYERS);
@@ -48,6 +49,8 @@ public class LobbyManager : MonoBehaviour
         if (currentLobby != CSteamID.Nil)
         {
             SteamMatchmaking.LeaveLobby(currentLobby);
+            string players = SteamMatchmaking.GetLobbyData(currentLobby, "players");
+            SteamMatchmaking.SetLobbyData(currentLobby, "players", $"{int.Parse(players) - 1}");
             currentLobby = CSteamID.Nil;
             Debug.Log("Opuszczono lobby.");
         }
@@ -59,30 +62,36 @@ public class LobbyManager : MonoBehaviour
     {
         if (callback.m_eResult != EResult.k_EResultOK)
         {
-            Debug.LogError("B³¹d tworzenia lobby: " + callback.m_eResult);
+            Debug.LogError("BÅ‚Ä…d tworzenia lobby: " + callback.m_eResult);
             return;
         }
 
         currentLobby = new CSteamID(callback.m_ulSteamIDLobby);
         Debug.Log("Lobby utworzone: " + currentLobby);
+        string nickname = SteamFriends.GetPersonaName();
 
-        // Ustaw podstawowe dane lobby — bêd¹ widoczne w liœcie
-        SteamMatchmaking.SetLobbyData(currentLobby, "name", "SpaceWars Lobby");
+        // Ustaw podstawowe dane lobby â€” bÄ™dÄ… widoczne w liÅ›cie
+        SteamMatchmaking.SetLobbyData(currentLobby, "name", $"Host_{nickname}");
         SteamMatchmaking.SetLobbyData(currentLobby, "host_name", SteamFriends.GetPersonaName());
         SteamMatchmaking.SetLobbyData(currentLobby, "version", Application.version);
-        SteamMatchmaking.SetLobbyData(currentLobby, "players", "1");
-        // Mo¿esz dodaæ dowolne inne pola, np mapê, tryb itp.
+        
+        // id aby oddzieliÄ‡ od innych devÃ³w
+        SteamMatchmaking.SetLobbyData(currentLobby, "game_key", "2abbddfd-1dbd-4eff-a4a9-07cabc02b32e");
+        SteamMatchmaking.SetLobbyData(currentLobby, "players", "0");
+        // MoÅ¼esz dodaÄ‡ dowolne inne pola, np mapÄ™, tryb itp.
     }
 
     private void OnLobbyEntered(LobbyEnter_t callback)
     {
         currentLobby = new CSteamID(callback.m_ulSteamIDLobby);
-        Debug.Log("Do³¹czono do lobby: " + currentLobby + " (owner? " + SteamMatchmaking.GetLobbyOwner(currentLobby) + ")");
-        // Mo¿esz pobraæ dane lobby:
+        Debug.Log("DoÅ‚Ä…czono do lobby: " + currentLobby + " (owner? " + SteamMatchmaking.GetLobbyOwner(currentLobby) + ")");
+        // MoÅ¼esz pobraÄ‡ dane lobby:
         string name = SteamMatchmaking.GetLobbyData(currentLobby, "name");
+        string players = SteamMatchmaking.GetLobbyData(currentLobby, "players");
+        SteamMatchmaking.SetLobbyData(currentLobby, "players", $"{int.Parse(players) + 1}");
         Debug.Log("Lobby name: " + name);
 
-        // np. wywo³aj tutaj inicjalizacjê sieci (host/clients)
+        // np. wywoÅ‚aj tutaj inicjalizacjÄ™ sieci (host/clients)
     }
 
     private void OnLobbyMatchList(LobbyMatchList_t callback)
@@ -95,19 +104,19 @@ public class LobbyManager : MonoBehaviour
             CSteamID lobbyId = SteamMatchmaking.GetLobbyByIndex(i);
             foundLobbies.Add(lobbyId);
         }
-        // Wywo³aj UI, aby wyœwietliæ foundLobbies i metadane
+        // WywoÅ‚aj UI, aby wyÅ›wietliÄ‡ foundLobbies i metadane
     }
 
     private void OnGameLobbyJoinRequested(GameLobbyJoinRequested_t callback)
     {
-        // Odbiorca zaproszenia — Steam wyœle to gdy kliknie "Join"
-        Debug.Log("Otrzymano zaproszenie/¿¹danie do³¹czenia do lobby: " + callback.m_steamIDLobby);
+        // Odbiorca zaproszenia â€” Steam wyÅ›le to gdy kliknie "Join"
+        Debug.Log("Otrzymano zaproszenie/Å¼Ä…danie doÅ‚Ä…czenia do lobby: " + callback.m_steamIDLobby);
         SteamMatchmaking.JoinLobby(callback.m_steamIDLobby);
     }
 
     private void OnLobbyDataUpdate(LobbyDataUpdate_t callback)
     {
-        // Przydatne, gdy zmienia siê metadata
+        // Przydatne, gdy zmienia siÄ™ metadata
         CSteamID lobby = new CSteamID(callback.m_ulSteamIDLobby);
         if (callback.m_bSuccess != 0)
         {
@@ -119,9 +128,12 @@ public class LobbyManager : MonoBehaviour
     #region Search / Join / Invite
     public void RequestLobbyList()
     {
-        // Mo¿esz dodaæ filtry przez SteamMatchmaking.AddRequestLobbyListFilter... jeœli chcesz
+        SteamMatchmaking.AddRequestLobbyListStringFilter(
+            "game_key", "2abbddfd-1dbd-4eff-a4a9-07cabc02b32e", ELobbyComparison.k_ELobbyComparisonEqual
+        );
+
         SteamMatchmaking.RequestLobbyList();
-        Debug.Log("RequestLobbyList wys³ane.");
+        Debug.Log("RequestLobbyList wysÅ‚ane z filtrem. (2abbddfd-1dbd-4eff-a4a9-07cabc02b32e)");
     }
 
     public List<CSteamID> GetFoundLobbies() => new List<CSteamID>(foundLobbies);
@@ -129,25 +141,25 @@ public class LobbyManager : MonoBehaviour
     public void JoinLobby(CSteamID lobbyId)
     {
         SteamMatchmaking.JoinLobby(lobbyId);
-        Debug.Log("Próba do³¹czenia do lobby: " + lobbyId);
+        Debug.Log("PrÃ³ba doÅ‚Ä…czenia do lobby: " + lobbyId);
     }
 
     public void InviteFriendToLobby(CSteamID friendSteamId)
     {
         if (currentLobby == CSteamID.Nil)
         {
-            Debug.LogWarning("Nie jesteœ w lobby — nie mo¿na zaprosiæ.");
+            Debug.LogWarning("Nie jesteÅ› w lobby â€” nie moÅ¼na zaprosiÄ‡.");
             return;
         }
         SteamMatchmaking.InviteUserToLobby(currentLobby, friendSteamId);
-        Debug.Log("Wys³ano zaproszenie do " + friendSteamId);
+        Debug.Log("WysÅ‚ano zaproszenie do " + friendSteamId);
     }
 
-    // Alternatywnie mo¿esz otworzyæ overlay z list¹ zaproszeñ (je¿eli dostêpne)
+    // Alternatywnie moÅ¼esz otworzyÄ‡ overlay z listÄ… zaproszeÅ„ (jeÅ¼eli dostÄ™pne)
     public void OpenOverlayInviteDialog()
     {
         if (currentLobby == CSteamID.Nil) return;
-        // Steam overlay ma funkcjê invite dialog; jeœli nie dzia³a w edytorze, trzeba testowaæ po buildzie.
+        // Steam overlay ma funkcjÄ™ invite dialog; jeÅ›li nie dziaÅ‚a w edytorze, trzeba testowaÄ‡ po buildzie.
         SteamFriends.ActivateGameOverlayInviteDialog(currentLobby);
     }
     #endregion
