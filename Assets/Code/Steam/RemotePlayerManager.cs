@@ -1,3 +1,4 @@
+using Steamworks;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -7,14 +8,20 @@ public class RemotePlayerManager : MonoBehaviour
 
     private Dictionary<ulong, GameObject> remotePlayers = new();
 
-    public GameObject playerPrefab;
-
     void Awake() => Instance = this;
 
     public void UpdateRemotePlayer(PlayerStateMessage msg)
     {
         if (!remotePlayers.TryGetValue(msg.steamId, out GameObject player))
         {
+            if (LobbyManager.Instance.currentLobby == CSteamID.Nil) return;
+
+            string slotMeta = SteamMatchmaking.GetLobbyMemberData(LobbyManager.Instance.currentLobby, new CSteamID(msg.steamId), "slot");
+
+            if (string.IsNullOrEmpty(slotMeta)) return;
+            string[] split = slotMeta.Split('_');
+            int teamNum = int.Parse(split[0]);
+            GameObject playerPrefab = Resources.Load<GameObject>($"PlayerShip_{teamNum}");
             player = Instantiate(playerPrefab, new Vector2(msg.posX, msg.posY), Quaternion.Euler(0, 0, msg.rot));
             remotePlayers[msg.steamId] = player;
             player.GetComponent<PlayerMovement>().enabled = false; // disable input on remotes

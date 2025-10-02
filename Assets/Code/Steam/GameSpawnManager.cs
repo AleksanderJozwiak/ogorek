@@ -37,7 +37,7 @@ public class GameSpawnManager : MonoBehaviour
         int slotNum = int.Parse(split[1]); // 1–2
 
         Transform spawnPoint = teams[teamNum - 1].slots[slotNum - 1];
-        GameObject playerPrefab = Resources.Load<GameObject>("PlayerShip"); // prefab in Resources folder
+        GameObject playerPrefab = Resources.Load<GameObject>($"PlayerShip_{teamNum}"); // prefab in Resources folder
 
         GameObject localPlayer = Instantiate(playerPrefab, spawnPoint.position, spawnPoint.rotation);
 
