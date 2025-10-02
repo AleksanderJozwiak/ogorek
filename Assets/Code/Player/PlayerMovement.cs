@@ -4,8 +4,8 @@ using UnityEngine;
 public class PlayerMovement : MonoBehaviour
 {
     [Header("Ship parameters")]
-    [SerializeField] private float shipAcceleration = 10f;
-    [SerializeField] private float shipMaxVelocity = 10f;
+    [SerializeField] private float shipAcceleration = 2f;
+    [SerializeField] private float shipMaxVelocity = 3f;
     [SerializeField] private float shipRotationSpeed = 100f;
     [SerializeField] private float bulletSpeed = 8f;
 
