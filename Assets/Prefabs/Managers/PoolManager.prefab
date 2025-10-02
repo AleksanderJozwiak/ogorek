@@ -1,0 +1,72 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1185965011119213987
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7101131278813554300}
+  - component: {fileID: 7670187617360462471}
+  m_Layer: 0
+  m_Name: PoolManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7101131278813554300
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1185965011119213987}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.4273037, y: 2.9280074, z: -0.074478395}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7670187617360462471
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1185965011119213987}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9aae2204b82fd04f872373d5e17fc05, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  poolConfigs:
+  - name: SoundFX
+    prefab: {fileID: 0}
+    minSize: 0
+    maxSize: 1
+    preWarmPool: 0
+  - name: Bullets
+    prefab: {fileID: 5014705353480152817, guid: 2f60a461af759ea48b39f846ae335615, type: 3}
+    minSize: 20
+    maxSize: 100
+    preWarmPool: 1
+  - name: Spacecrafts
+    prefab: {fileID: 0}
+    minSize: 0
+    maxSize: 1
+    preWarmPool: 0
+  - name: Planets
+    prefab: {fileID: 0}
+    minSize: 0
+    maxSize: 1
+    preWarmPool: 0
+  - name: Asteroids
+    prefab: {fileID: 0}
+    minSize: 0
+    maxSize: 1
+    preWarmPool: 0

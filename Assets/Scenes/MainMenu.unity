@@ -4235,7 +4235,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 1168.75, y: -58}
+  m_AnchoredPosition: {x: 1168.75, y: -60}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &867658388
@@ -5077,9 +5077,9 @@ CanvasGroup:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1007362023}
   m_Enabled: 1
-  m_Alpha: 1
-  m_Interactable: 1
-  m_BlocksRaycasts: 1
+  m_Alpha: 0
+  m_Interactable: 0
+  m_BlocksRaycasts: 0
   m_IgnoreParentGroups: 0
 --- !u!222 &1007362026
 CanvasRenderer:
@@ -9050,9 +9050,9 @@ CanvasGroup:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1701808737}
   m_Enabled: 1
-  m_Alpha: 0
-  m_Interactable: 0
-  m_BlocksRaycasts: 0
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
 --- !u!222 &1701808740
 CanvasRenderer:
@@ -11435,7 +11435,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1297843439381855875, guid: fb97f858527d1ce4a862325cda38b4fa, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7055806389812554637, guid: fb97f858527d1ce4a862325cda38b4fa, type: 3}
       propertyPath: m_LocalPosition.x
@@ -11599,6 +11599,10 @@ PrefabInstance:
       propertyPath: readyButton
       value: 
       objectReference: {fileID: 1107185697}
+    - target: {fileID: 8192927386514303928, guid: a4e8b6b5a70de6b4da92f2ad2913fecd, type: 3}
+      propertyPath: startButton
+      value: 
+      objectReference: {fileID: 867658388}
     - target: {fileID: 8192927386514303928, guid: a4e8b6b5a70de6b4da92f2ad2913fecd, type: 3}
       propertyPath: playerTeamsRoot
       value: 

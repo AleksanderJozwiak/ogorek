@@ -1,3 +1,4 @@
+using Steamworks;
 using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
@@ -13,8 +14,8 @@ public class PlayerMovement : MonoBehaviour
 
     private Rigidbody2D shipRigidbody;
 
-    float thrustInput; 
-    float turnInput;  
+    float thrustInput;
+    float turnInput;
 
     private bool isAlive = true;
 
@@ -44,7 +45,20 @@ public class PlayerMovement : MonoBehaviour
         }
 
         shipRigidbody.linearVelocity = Vector2.ClampMagnitude(shipRigidbody.linearVelocity, shipMaxVelocity);
+
+        PlayerStateMessage msg = new()
+        {
+            steamId = SteamUser.GetSteamID().m_SteamID,
+            posX = transform.position.x,
+            posY = transform.position.y,
+            rot = transform.eulerAngles.z,
+            velX = shipRigidbody.linearVelocity.x,
+            velY = shipRigidbody.linearVelocity.y
+        };
+
+        SteamNetworkManager.SendPlayerState(msg);
     }
+
 
     private void HandleInputs()
     {
@@ -57,23 +71,39 @@ public class PlayerMovement : MonoBehaviour
         if (Input.GetKey(KeyCode.D)) turnInput -= 1f;
     }
 
+    private void FireBullet()
+    {
+        GameObject go = PoolManager.Instance.PoolMap[PoolCategory.Bullets].Get();
+
+        go.transform.SetPositionAndRotation(bulletSpawn.position, Quaternion.identity);
+        var rb = go.GetComponent<Rigidbody2D>();
+        rb.linearVelocity = Vector2.zero;
+        rb.angularVelocity = 0f;
+
+        Vector2 shipVelocity = shipRigidbody.linearVelocity;
+        Vector2 shipDirection = transform.up;
+        float shipForwardSpeed = Mathf.Max(0f, Vector2.Dot(shipVelocity, shipDirection));
+
+        rb.linearVelocity = shipDirection * shipForwardSpeed;
+        rb.AddForce(bulletSpeed * (Vector2)transform.up, ForceMode2D.Impulse);
+    }
+
     private void HandleShooting()
     {
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            GameObject go = PoolManager.Instance.PoolMap[PoolCategory.Bullets].Get();
+            FireBullet();
 
-            go.transform.SetPositionAndRotation(bulletSpawn.position, Quaternion.identity);
-            var rb = go.GetComponent<Rigidbody2D>();
-            rb.linearVelocity = Vector2.zero;
-            rb.angularVelocity = 0f;
+            ShootMessage msg = new()
+            {
+                steamId = SteamUser.GetSteamID().m_SteamID,
+                posX = bulletSpawn.position.x,
+                posY = bulletSpawn.position.y,
+                dirX = transform.up.x,
+                dirY = transform.up.y
+            };
 
-            Vector2 shipVelocity = shipRigidbody.linearVelocity;
-            Vector2 shipDirection = transform.up;
-            float shipForwardSpeed = Mathf.Max(0f, Vector2.Dot(shipVelocity, shipDirection));
-
-            rb.linearVelocity = shipDirection * shipForwardSpeed;
-            rb.AddForce(bulletSpeed * (Vector2)transform.up, ForceMode2D.Impulse);
+            SteamNetworkManager.SendShoot(msg);
         }
     }
 }

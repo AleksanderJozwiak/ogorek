@@ -119,6 +119,14 @@ public class LobbyManager : MonoBehaviour
     {
         if (callback.m_ulSteamIDLobby != currentLobby.m_SteamID) return;
 
+        string gameStart = SteamMatchmaking.GetLobbyData(currentLobby, "game_start");
+        if (gameStart == "1")
+        {
+            Debug.Log("Game is starting!");
+            UnityEngine.SceneManagement.SceneManager.LoadScene("GameScene");
+            return;
+        }
+
         RefreshTeamUI();
     }
 

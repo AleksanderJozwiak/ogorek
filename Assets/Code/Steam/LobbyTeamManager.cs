@@ -9,6 +9,7 @@ public class LobbyTeamManager : MonoBehaviour
     [Header("Team Hierarchy")]
     public Transform playerTeamsRoot;
     public Button readyButton;
+    public Button startButton;
 
     private int currentTeam = -1;
     private int currentSlot = -1;
@@ -18,6 +19,9 @@ public class LobbyTeamManager : MonoBehaviour
     {
         SetupTeamButtons();
         RefreshTeamUI();
+
+        startButton.onClick.RemoveAllListeners();
+        startButton.onClick.AddListener(OnHostStartGame);
     }
 
     #region Setup Buttons
@@ -123,7 +127,7 @@ public class LobbyTeamManager : MonoBehaviour
     {
         if (LobbyManager.Instance.currentLobby == CSteamID.Nil) return;
 
-        // Clear all slots first
+        // Reset UI
         for (int teamIndex = 0; teamIndex < playerTeamsRoot.childCount; teamIndex++)
         {
             Transform team = playerTeamsRoot.GetChild(teamIndex);
@@ -140,8 +144,10 @@ public class LobbyTeamManager : MonoBehaviour
             }
         }
 
-        // Fill slots based on member metadata
+        // Track ready states
         int memberCount = SteamMatchmaking.GetNumLobbyMembers(LobbyManager.Instance.currentLobby);
+        int readyCount = 0;
+
         for (int i = 0; i < memberCount; i++)
         {
             CSteamID memberId = SteamMatchmaking.GetLobbyMemberByIndex(LobbyManager.Instance.currentLobby, i);
@@ -163,11 +169,43 @@ public class LobbyTeamManager : MonoBehaviour
             readyImg.color = readyStr == "1" ? Color.green : Color.red;
 
             btn.interactable = false;
+
+            if (readyStr == "1")
+                readyCount++;
+        }
+
+        // === Host start button logic ===
+        bool allReady = readyCount == memberCount && memberCount > 0;
+
+        // Check if I'm host
+        string hostName = SteamMatchmaking.GetLobbyData(LobbyManager.Instance.currentLobby, "host_name");
+        bool isHost = SteamFriends.GetPersonaName() == hostName;
+
+        if (isHost)
+        {
+            if (allReady)
+            {
+                readyButton.gameObject.SetActive(false);
+                startButton.gameObject.SetActive(true);
+            }
+            else
+            {
+                readyButton.gameObject.SetActive(true);
+                startButton.gameObject.SetActive(false);
+            }
+        }
+
+        // Non-hosts should only see ready button
+        if (!isHost)
+        {
+            readyButton.gameObject.SetActive(true);
+            startButton.gameObject.SetActive(false);
         }
 
         // Update local ready button text
         UpdateReadyButtonText();
     }
+
     #endregion
 
     #region Ready
@@ -192,4 +230,18 @@ public class LobbyTeamManager : MonoBehaviour
         btnText.text = isReady ? "Unready" : "Ready";
     }
     #endregion
+
+    private void OnHostStartGame()
+    {
+        if (LobbyManager.Instance.currentLobby == CSteamID.Nil) return;
+
+        Debug.Log("Host starting game...");
+
+        // Set lobby data so all players know game is starting
+        SteamMatchmaking.SetLobbyData(LobbyManager.Instance.currentLobby, "game_start", "1");
+
+        // You could also load your scene directly here for host
+        UnityEngine.SceneManagement.SceneManager.LoadScene("GameScene");
+    }
+
 }
