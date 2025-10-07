@@ -190,7 +190,7 @@ PolygonCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 0.865, y: 0.9}
+    oldSize: {x: 1.73, y: 1.8}
     newSize: {x: 1, y: 1}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
@@ -219,6 +219,11 @@ MonoBehaviour:
   shipRotationSpeed: 100
   bulletSpeed: 8
   bulletSpawn: {fileID: 7990644788345452046}
+  trailRenderers:
+  - {fileID: 5941153928447005197}
+  - {fileID: 1495411348592358616}
+  trailLifetime: 0.5
+  trailFadeOutTime: 2
 --- !u!114 &675361756158334084
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -245,11 +250,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 760137786814502844, guid: 0684cbb0291f5bf47973011f599318c1, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.12
+      value: -0.2
       objectReference: {fileID: 0}
     - target: {fileID: 760137786814502844, guid: 0684cbb0291f5bf47973011f599318c1, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.5
+      value: -1
       objectReference: {fileID: 0}
     - target: {fileID: 760137786814502844, guid: 0684cbb0291f5bf47973011f599318c1, type: 3}
       propertyPath: m_LocalPosition.z
@@ -297,6 +302,11 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 760137786814502844, guid: 0684cbb0291f5bf47973011f599318c1, type: 3}
   m_PrefabInstance: {fileID: 178611256657361401}
   m_PrefabAsset: {fileID: 0}
+--- !u!96 &5941153928447005197 stripped
+TrailRenderer:
+  m_CorrespondingSourceObject: {fileID: 5767340878556474356, guid: 0684cbb0291f5bf47973011f599318c1, type: 3}
+  m_PrefabInstance: {fileID: 178611256657361401}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &4956617428564827948
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -307,11 +317,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 760137786814502844, guid: 0684cbb0291f5bf47973011f599318c1, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0.12
+      value: 0.2
       objectReference: {fileID: 0}
     - target: {fileID: 760137786814502844, guid: 0684cbb0291f5bf47973011f599318c1, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.5
+      value: -1
       objectReference: {fileID: 0}
     - target: {fileID: 760137786814502844, guid: 0684cbb0291f5bf47973011f599318c1, type: 3}
       propertyPath: m_LocalPosition.z
@@ -358,6 +368,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 0684cbb0291f5bf47973011f599318c1, type: 3}
+--- !u!96 &1495411348592358616 stripped
+TrailRenderer:
+  m_CorrespondingSourceObject: {fileID: 5767340878556474356, guid: 0684cbb0291f5bf47973011f599318c1, type: 3}
+  m_PrefabInstance: {fileID: 4956617428564827948}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &5640191185658300560 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 760137786814502844, guid: 0684cbb0291f5bf47973011f599318c1, type: 3}

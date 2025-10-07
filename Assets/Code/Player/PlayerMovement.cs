@@ -11,6 +11,11 @@ public class PlayerMovement : MonoBehaviour
 
     [Header("Object references")]
     [SerializeField] private Transform bulletSpawn;
+    [SerializeField] private TrailRenderer[] trailRenderers;
+
+    [Header("Trail parameters")]
+    [SerializeField] private float trailLifetime = 0.5f;
+    [SerializeField] private float trailFadeOutTime = 2f;
 
     private Rigidbody2D shipRigidbody;
 
@@ -63,7 +68,25 @@ public class PlayerMovement : MonoBehaviour
     private void HandleInputs()
     {
         thrustInput = 0f;
-        if (Input.GetKey(KeyCode.W)) thrustInput += 1f;
+        if (Input.GetKey(KeyCode.W))
+        {
+            thrustInput += 1f;
+            
+            foreach(TrailRenderer trail in trailRenderers)
+            {
+                trail.emitting = true;
+                trail.time = trailLifetime;
+            }
+        }
+        else
+        {
+            foreach(TrailRenderer trail in trailRenderers)
+            {
+                trail.time = Mathf.Max(0f, trail.time - trailFadeOutTime * Time.deltaTime);
+                trail.emitting = trail.time > 0f;
+            }
+        }
+
         if (Input.GetKey(KeyCode.S)) thrustInput -= 1f;
 
         turnInput = 0f;
