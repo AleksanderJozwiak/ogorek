@@ -47,7 +47,7 @@ GameObject:
   - component: {fileID: 7982444950971560506}
   - component: {fileID: 7536269813053903712}
   m_Layer: 0
-  m_Name: PlayerShip_1
+  m_Name: PlayerShip_6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -118,7 +118,7 @@ SpriteRenderer:
   m_SortingLayerID: -2092133371
   m_SortingLayer: 2
   m_SortingOrder: 0
-  m_Sprite: {fileID: -4311136326954168317, guid: 815cedbfd54b09e4cac5e118de506e7a, type: 3}
+  m_Sprite: {fileID: -9033041279139796959, guid: d9f121daff7862847a74752cba7cbf69, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -194,7 +194,7 @@ PolygonCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 1.73, y: 1.8}
+    oldSize: {x: 1.77, y: 1.85}
     newSize: {x: 1, y: 1}
     adaptiveTilingThreshold: 0.5
     drawMode: 0

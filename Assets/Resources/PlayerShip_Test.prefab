@@ -44,10 +44,9 @@ GameObject:
   - component: {fileID: 4860007072898237336}
   - component: {fileID: 4662764669599792989}
   - component: {fileID: 7541622698050996204}
-  - component: {fileID: 7982444950971560506}
-  - component: {fileID: 7536269813053903712}
+  - component: {fileID: 6198460454162987396}
   m_Layer: 0
-  m_Name: PlayerShip_1
+  m_Name: PlayerShip_Test
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -91,8 +90,6 @@ SpriteRenderer:
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
   m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -114,11 +111,10 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: -2092133371
-  m_SortingLayer: 2
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: -4311136326954168317, guid: 815cedbfd54b09e4cac5e118de506e7a, type: 3}
+  m_Sprite: {fileID: 7482667652216324306, guid: 75f5f34dc1b5347e0b8351032682f224, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -193,8 +189,8 @@ PolygonCollider2D:
   m_Offset: {x: 0, y: 0}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 1.73, y: 1.8}
+    pivot: {x: 0.5, y: 0.28866667}
+    oldSize: {x: 1, y: 1}
     newSize: {x: 1, y: 1}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
@@ -202,9 +198,9 @@ PolygonCollider2D:
   m_AutoTiling: 0
   m_Points:
     m_Paths:
-    - - {x: 0, y: 1}
-      - {x: -0.75, y: -0.75}
-      - {x: 0.75, y: -0.75}
+    - - {x: 0, y: 0.5773587}
+      - {x: -0.5, y: -0.28866667}
+      - {x: 0.5, y: -0.28866667}
   m_UseDelaunayMesh: 0
 --- !u!114 &7541622698050996204
 MonoBehaviour:
@@ -228,23 +224,7 @@ MonoBehaviour:
   - {fileID: 1495411348592358616}
   trailLifetime: 0.5
   trailFadeOutTime: 2
---- !u!114 &7982444950971560506
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6265444818785375990}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 080d84d9e491a8340ba43d4ed14d9976, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  center: {x: 0, y: 0}
-  size: {x: 200, y: 120}
-  useRadius: 1
-  radiusOverride: -1
---- !u!114 &7536269813053903712
+--- !u!114 &6198460454162987396
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -258,7 +238,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   center: {x: 0, y: 0}
   size: {x: 100, y: 100}
-  useRadius: 0
+  useRadius: 1
   radiusOverride: -1
 --- !u!1001 &178611256657361401
 PrefabInstance:
@@ -274,7 +254,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 760137786814502844, guid: 0684cbb0291f5bf47973011f599318c1, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -1
+      value: -0.5
       objectReference: {fileID: 0}
     - target: {fileID: 760137786814502844, guid: 0684cbb0291f5bf47973011f599318c1, type: 3}
       propertyPath: m_LocalPosition.z
@@ -341,7 +321,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 760137786814502844, guid: 0684cbb0291f5bf47973011f599318c1, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -1
+      value: -0.5
       objectReference: {fileID: 0}
     - target: {fileID: 760137786814502844, guid: 0684cbb0291f5bf47973011f599318c1, type: 3}
       propertyPath: m_LocalPosition.z

@@ -965,7 +965,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1435769618158665791, guid: aea65eeebf88cc44ab725ab1bf157379, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -10
+      value: -30
       objectReference: {fileID: 0}
     - target: {fileID: 1435769618158665791, guid: aea65eeebf88cc44ab725ab1bf157379, type: 3}
       propertyPath: m_LocalRotation.w
@@ -1002,31 +1002,8 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 8945870383908682063, guid: aea65eeebf88cc44ab725ab1bf157379, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1676369624}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: aea65eeebf88cc44ab725ab1bf157379, type: 3}
---- !u!1 &1676369623 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 8945870383908682063, guid: aea65eeebf88cc44ab725ab1bf157379, type: 3}
-  m_PrefabInstance: {fileID: 1676369622}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1676369624
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1676369623}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d054d661523a39b49af0fb093b8b2ea1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  target: {fileID: 5756931669528709401, guid: 4b08b43b1b52e674381d33d28122f019, type: 3}
-  offset: {x: 0, y: 0, z: -10}
-  smoothTime: 0.15
 --- !u!1 &1777902146
 GameObject:
   m_ObjectHideFlags: 0
@@ -1374,6 +1351,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6586197708244087869, guid: 4c7f3e0e140dcda4ba674e6bae93485d, type: 3}
+      propertyPath: colorPalette
+      value: 
+      objectReference: {fileID: 11400000, guid: 750e3331f48b7ff4ebb545edbbdda8ce, type: 2}
     - target: {fileID: 6586197708244087869, guid: 4c7f3e0e140dcda4ba674e6bae93485d, type: 3}
       propertyPath: 'teams.Array.data[0].slots.Array.data[0]'
       value: 

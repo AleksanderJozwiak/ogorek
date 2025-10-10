@@ -12,9 +12,13 @@ public class GameSpawnManager : MonoBehaviour
 {
     [Header("Teams (9 total, each with 2 slots)")]
     public TeamSpawnPoints[] teams = new TeamSpawnPoints[9];
+    [SerializeField] ColorPalette colorPalette;
+
+    private Camera _camera;
 
     private void Start()
     {
+        _camera = Camera.main;
         SpawnLocalPlayer();
     }
 
@@ -39,9 +43,20 @@ public class GameSpawnManager : MonoBehaviour
         Transform spawnPoint = teams[teamNum - 1].slots[slotNum - 1];
         GameObject playerPrefab = Resources.Load<GameObject>($"PlayerShip_{teamNum}"); // prefab in Resources folder
 
+        
+        var trails = playerPrefab.GetComponentsInChildren<TrailRenderer>();
+        MaterialPropertyBlock trailBlock = new();
+        trailBlock.SetColor("_TeamColor", colorPalette.Colors[teamNum]);
+        foreach (TrailRenderer trail in trails)
+        {
+            trail.SetPropertyBlock(trailBlock);
+        }
+
         GameObject localPlayer = Instantiate(playerPrefab, spawnPoint.position, spawnPoint.rotation);
+
 
         // Enable control only for the local player
         localPlayer.GetComponent<PlayerMovement>().enabled = true;
+        _camera.GetComponent<CameraFollow>().target = localPlayer.transform;
     }
 }

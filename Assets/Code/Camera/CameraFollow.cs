@@ -8,7 +8,7 @@ public class CameraFollow : MonoBehaviour
 
     Vector3 vel;
 
-    void LateUpdate()
+    void FixedUpdate()
     {
         if (!target) return;
         var desired = target.position + offset;
