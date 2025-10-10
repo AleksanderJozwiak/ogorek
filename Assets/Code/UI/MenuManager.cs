@@ -47,7 +47,7 @@ public class MenuManager : MonoBehaviour
                 var list = LobbyManager.Instance.GetFoundLobbies();
                 RefreshLobbyList(list);
             }
-            yield return new WaitForSeconds(5f);
+            yield return new WaitForSeconds(2.5f);
         }
     }
 
@@ -159,6 +159,12 @@ public class MenuManager : MonoBehaviour
                 ToggleCanvasGroup(LobbyPanel);
             });
         }
+    }
+
+    public void OpenMainMenu()
+    {
+        LobbyManager.Instance.LeaveLobby();
+        UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
     }
 
     void Update()

@@ -123,6 +123,7 @@ public class LobbyManager : MonoBehaviour
         if (gameStart == "1")
         {
             Debug.Log("Game is starting!");
+            SteamMatchmaking.SetLobbyJoinable(currentLobby, false);
             UnityEngine.SceneManagement.SceneManager.LoadScene("GameScene");
             return;
         }
