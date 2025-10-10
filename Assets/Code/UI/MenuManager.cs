@@ -16,10 +16,12 @@ public class MenuManager : MonoBehaviour
     public CanvasGroup LobbyBrowserPanel;
     public CanvasGroup LobbyPanel;
     public CanvasGroup PauseMenuPanel;
+    public CanvasGroup SettingsPanel;
 
     public Toggle friendsOnly;
 
     private Coroutine refreshRoutine;
+    private CanvasGroup lastCanvasGroup = null;
 
     private void Start()
     {
@@ -79,12 +81,17 @@ public class MenuManager : MonoBehaviour
 
     public void ToggleCanvasGroup(CanvasGroup canvasGroup) => ToggleCanvasGroup(canvasGroup, out _);
 
+    public void ToggleLastCanvasGroup() => ToggleCanvasGroup(lastCanvasGroup, out _);
+
     public void ToggleCanvasGroup(CanvasGroup canvasGroup, out bool isVisible)
     {
         if (canvasGroup.alpha == 0)
             canvasGroup.alpha = 1;
         else
+        {
             canvasGroup.alpha = 0;
+            lastCanvasGroup = canvasGroup;
+        }
 
         canvasGroup.interactable = canvasGroup.alpha == 1;
         canvasGroup.blocksRaycasts = canvasGroup.alpha == 1;
