@@ -3,11 +3,9 @@ using UnityEngine;
 [ExecuteAlways]
 public class Wrap : MonoBehaviour
 {
-    [Header("World bounds")]
     public Vector2 center = Vector2.zero;
     public Vector2 size = new Vector2(200f, 120f);
 
-    [Header("Collision safety")]
     public bool useRadius = true;
     public float radiusOverride = -1f;
 
@@ -24,25 +22,30 @@ public class Wrap : MonoBehaviour
     {
         if (!Application.isPlaying) return;
 
-        var pos = rb ? rb.position : (Vector2)transform.position;
+        Vector2 pos = rb ? rb.position : (Vector2)transform.position;
         float r = GetRadius();
 
-        bool wrapped = false;
+        // Predictive wrap offset
+        Vector2 wrapOffset = Vector2.zero;
 
-        // X
-        if (pos.x < MinX - r) { pos.x += size.x; wrapped = true; }
-        else if (pos.x > MaxX + r) { pos.x -= size.x; wrapped = true; }
+        if (pos.x < MinX - r) wrapOffset.x = size.x;
+        else if (pos.x > MaxX + r) wrapOffset.x = -size.x;
 
-        // Y
-        if (pos.y < MinY - r) { pos.y += size.y; wrapped = true; }
-        else if (pos.y > MaxY + r) { pos.y -= size.y; wrapped = true; }
+        if (pos.y < MinY - r) wrapOffset.y = size.y;
+        else if (pos.y > MaxY + r) wrapOffset.y = -size.y;
 
-        if (wrapped)
+        // Apply the wrap offset smoothly to the camera
+        if (wrapOffset != Vector2.zero && Camera.main)
         {
-            if (rb)
-                rb.position = pos;   
-            else
-                transform.position = pos;
+            Camera.main.transform.position += new Vector3(wrapOffset.x, wrapOffset.y, 0f);
+        }
+
+        // Apply the actual wrap to the player
+        if (wrapOffset != Vector2.zero)
+        {
+            pos += wrapOffset;
+            if (rb) rb.position = pos;
+            else transform.position = pos;
         }
     }
 
@@ -60,6 +63,4 @@ public class Wrap : MonoBehaviour
 
         return r;
     }
-
 }
-

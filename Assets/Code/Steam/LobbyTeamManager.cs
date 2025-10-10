@@ -11,6 +11,9 @@ public class LobbyTeamManager : MonoBehaviour
     public Button readyButton;
     public Button startButton;
 
+    public Sprite readySprite;
+    public Sprite notReadySprite;
+
     private int currentTeam = -1;
     private int currentSlot = -1;
     private bool isReady = false;
@@ -139,7 +142,7 @@ public class LobbyTeamManager : MonoBehaviour
                 Button btn = slot.GetComponent<Button>();
 
                 text.text = "Empty";
-                readyImg.color = Color.red;
+                readyImg.sprite = notReadySprite;
                 btn.interactable = true;
             }
         }
@@ -166,7 +169,7 @@ public class LobbyTeamManager : MonoBehaviour
             Button btn = slotTransform.GetComponent<Button>();
 
             text.text = SteamFriends.GetFriendPersonaName(memberId);
-            readyImg.color = readyStr == "1" ? Color.green : Color.red;
+            readyImg.sprite = readyStr == "1" ? readySprite : notReadySprite;
 
             btn.interactable = false;
 
