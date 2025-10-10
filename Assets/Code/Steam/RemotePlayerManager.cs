@@ -1,10 +1,12 @@
 using Steamworks;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class RemotePlayerManager : MonoBehaviour
 {
     public static RemotePlayerManager Instance;
+    [SerializeField] ColorPalette colorPalette;
 
     private Dictionary<ulong, GameObject> remotePlayers = new();
 
@@ -23,6 +25,14 @@ public class RemotePlayerManager : MonoBehaviour
             int teamNum = int.Parse(split[0]);
             GameObject playerPrefab = Resources.Load<GameObject>($"PlayerShip_{teamNum}");
             player = Instantiate(playerPrefab, new Vector2(msg.posX, msg.posY), Quaternion.Euler(0, 0, msg.rot));
+            var trails = player.GetComponentsInChildren<TrailRenderer>();
+
+            MaterialPropertyBlock trailBlock = new();
+            trailBlock.SetColor("_TeamColor", colorPalette.Colors[teamNum - 1]);
+            foreach (TrailRenderer trail in trails)
+            {
+                trail.SetPropertyBlock(trailBlock);
+            }
             remotePlayers[msg.steamId] = player;
             player.GetComponent<PlayerMovement>().enabled = false; // disable input on remotes
         }

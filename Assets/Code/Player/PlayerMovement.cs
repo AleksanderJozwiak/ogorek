@@ -24,9 +24,14 @@ public class PlayerMovement : MonoBehaviour
 
     private bool isAlive = true;
 
+    private MenuManager menuManager;
+
     private void Start()
     {
         shipRigidbody = GetComponent<Rigidbody2D>();
+        menuManager = FindAnyObjectByType<MenuManager>();
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 
     private void Update()
@@ -92,6 +97,8 @@ public class PlayerMovement : MonoBehaviour
         turnInput = 0f;
         if (Input.GetKey(KeyCode.A)) turnInput += 1f;
         if (Input.GetKey(KeyCode.D)) turnInput -= 1f;
+
+        if (Input.GetKeyDown(KeyCode.Escape)) menuManager.TogglePauseMenu();
     }
 
     private void FireBullet()

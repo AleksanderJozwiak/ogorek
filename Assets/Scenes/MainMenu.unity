@@ -550,7 +550,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &101150731
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1937,7 +1937,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 370169668}
         m_TargetAssemblyTypeName: MenuManager, Assembly-CSharp
-        m_MethodName: ToogleCanvasGroup
+        m_MethodName: ToggleCanvasGroup
         m_Mode: 2
         m_Arguments:
           m_ObjectArgument: {fileID: 1779149110}
@@ -1949,7 +1949,7 @@ MonoBehaviour:
         m_CallState: 2
       - m_Target: {fileID: 370169668}
         m_TargetAssemblyTypeName: MenuManager, Assembly-CSharp
-        m_MethodName: ToogleCanvasGroup
+        m_MethodName: ToggleCanvasGroup
         m_Mode: 2
         m_Arguments:
           m_ObjectArgument: {fileID: 1007362025}
@@ -2338,7 +2338,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 370169668}
         m_TargetAssemblyTypeName: MenuManager, Assembly-CSharp
-        m_MethodName: ToogleCanvasGroup
+        m_MethodName: ToggleCanvasGroup
         m_Mode: 2
         m_Arguments:
           m_ObjectArgument: {fileID: 1007362025}
@@ -2350,7 +2350,7 @@ MonoBehaviour:
         m_CallState: 2
       - m_Target: {fileID: 370169668}
         m_TargetAssemblyTypeName: MenuManager, Assembly-CSharp
-        m_MethodName: ToogleCanvasGroup
+        m_MethodName: ToggleCanvasGroup
         m_Mode: 2
         m_Arguments:
           m_ObjectArgument: {fileID: 1701808739}
@@ -4015,7 +4015,7 @@ MonoBehaviour:
         m_CallState: 2
       - m_Target: {fileID: 370169668}
         m_TargetAssemblyTypeName: MenuManager, Assembly-CSharp
-        m_MethodName: ToogleCanvasGroup
+        m_MethodName: ToggleCanvasGroup
         m_Mode: 2
         m_Arguments:
           m_ObjectArgument: {fileID: 1779149110}
@@ -4027,7 +4027,7 @@ MonoBehaviour:
         m_CallState: 2
       - m_Target: {fileID: 370169668}
         m_TargetAssemblyTypeName: MenuManager, Assembly-CSharp
-        m_MethodName: ToogleCanvasGroup
+        m_MethodName: ToggleCanvasGroup
         m_Mode: 2
         m_Arguments:
           m_ObjectArgument: {fileID: 1007362025}
@@ -6841,7 +6841,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 370169668}
         m_TargetAssemblyTypeName: MenuManager, Assembly-CSharp
-        m_MethodName: ToogleCanvasGroup
+        m_MethodName: ToggleCanvasGroup
         m_Mode: 2
         m_Arguments:
           m_ObjectArgument: {fileID: 1007362025}
@@ -6853,7 +6853,7 @@ MonoBehaviour:
         m_CallState: 2
       - m_Target: {fileID: 370169668}
         m_TargetAssemblyTypeName: MenuManager, Assembly-CSharp
-        m_MethodName: ToogleCanvasGroup
+        m_MethodName: ToggleCanvasGroup
         m_Mode: 2
         m_Arguments:
           m_ObjectArgument: {fileID: 1701808739}

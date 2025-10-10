@@ -15,6 +15,7 @@ public class MenuManager : MonoBehaviour
     public CanvasGroup MainMenuPanel;
     public CanvasGroup LobbyBrowserPanel;
     public CanvasGroup LobbyPanel;
+    public CanvasGroup PauseMenuPanel;
 
     public Toggle friendsOnly;
 
@@ -22,6 +23,7 @@ public class MenuManager : MonoBehaviour
 
     private void Start()
     {
+        if (LobbyBrowserPanel == null || LobbyPanel == null) return;
         StartCoroutine(WaitForLobbyManager());
         if (LobbyManager.Instance != null)
             refreshRoutine = StartCoroutine(AutoRefreshLobbyList());
@@ -49,6 +51,21 @@ public class MenuManager : MonoBehaviour
         }
     }
 
+    public void TogglePauseMenu()
+    {
+        ToggleCanvasGroup(PauseMenuPanel, out bool isVisible);
+        if (isVisible)
+        {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
+        else
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
+    }
+
     private void OnDisable()
     {
         if (refreshRoutine != null)
@@ -60,22 +77,19 @@ public class MenuManager : MonoBehaviour
             LobbyManager.Instance.OnLobbyListUpdated -= RefreshLobbyList;
     }
 
-    public void ToogleCanvasGroup(CanvasGroup canvasGroup)
+    public void ToggleCanvasGroup(CanvasGroup canvasGroup) => ToggleCanvasGroup(canvasGroup, out _);
+
+    public void ToggleCanvasGroup(CanvasGroup canvasGroup, out bool isVisible)
     {
         if (canvasGroup.alpha == 0)
             canvasGroup.alpha = 1;
         else
             canvasGroup.alpha = 0;
 
-        if (canvasGroup.interactable == false)
-            canvasGroup.interactable = true;
-        else
-            canvasGroup.interactable = false;
+        canvasGroup.interactable = canvasGroup.alpha == 1;
+        canvasGroup.blocksRaycasts = canvasGroup.alpha == 1;
 
-        if (canvasGroup.blocksRaycasts == false)
-            canvasGroup.blocksRaycasts = true;
-        else
-            canvasGroup.blocksRaycasts = false;
+        isVisible = canvasGroup.alpha == 1;
     }
 
     public void QuitGame()
@@ -108,7 +122,7 @@ public class MenuManager : MonoBehaviour
     public void ShowLobbyBrowserAfterHostLeft()
     {
         HideAllPanels();
-        ToogleCanvasGroup(LobbyBrowserPanel);
+        ToggleCanvasGroup(LobbyBrowserPanel);
         LobbyManager.Instance.RequestLobbyList();
         var list = LobbyManager.Instance.GetFoundLobbies();
         RefreshLobbyList(list);
@@ -117,7 +131,7 @@ public class MenuManager : MonoBehaviour
     public void OpenLobbyPanel()
     {
         HideAllPanels();
-        ToogleCanvasGroup(LobbyPanel);
+        ToggleCanvasGroup(LobbyPanel);
     }
 
     private void RefreshLobbyList(List<CSteamID> lobbies)
@@ -142,7 +156,7 @@ public class MenuManager : MonoBehaviour
             {
                 LobbyManager.Instance.JoinLobby(lobbyId);
                 HideAllPanels();
-                ToogleCanvasGroup(LobbyPanel);
+                ToggleCanvasGroup(LobbyPanel);
             });
         }
     }

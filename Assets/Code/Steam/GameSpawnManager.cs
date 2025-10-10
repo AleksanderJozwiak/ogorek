@@ -44,16 +44,15 @@ public class GameSpawnManager : MonoBehaviour
         GameObject playerPrefab = Resources.Load<GameObject>($"PlayerShip_{teamNum}"); // prefab in Resources folder
 
         
-        var trails = playerPrefab.GetComponentsInChildren<TrailRenderer>();
+        GameObject localPlayer = Instantiate(playerPrefab, spawnPoint.position, spawnPoint.rotation);
+        var trails = localPlayer.GetComponentsInChildren<TrailRenderer>();
+
         MaterialPropertyBlock trailBlock = new();
-        trailBlock.SetColor("_TeamColor", colorPalette.Colors[teamNum]);
+        trailBlock.SetColor("_TeamColor", colorPalette.Colors[teamNum - 1]);
         foreach (TrailRenderer trail in trails)
         {
             trail.SetPropertyBlock(trailBlock);
         }
-
-        GameObject localPlayer = Instantiate(playerPrefab, spawnPoint.position, spawnPoint.rotation);
-
 
         // Enable control only for the local player
         localPlayer.GetComponent<PlayerMovement>().enabled = true;

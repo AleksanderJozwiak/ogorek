@@ -44,4 +44,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d63960d4081c09041832eacb33a79f65, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerPrefab: {fileID: 6265444818785375990, guid: 955ef0d8e8456294290401a691ecd4f7, type: 3}
+  colorPalette: {fileID: 11400000, guid: 750e3331f48b7ff4ebb545edbbdda8ce, type: 2}
