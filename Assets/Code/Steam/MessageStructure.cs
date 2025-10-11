@@ -16,6 +16,7 @@ public struct PlayerStateMessage
     public float rot;
     public float velX, velY;
     public bool emmitingTrail;
+    public bool isAlive;
 }
 
 [System.Serializable]

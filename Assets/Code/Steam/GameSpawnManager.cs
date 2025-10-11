@@ -16,17 +16,37 @@ public class GameSpawnManager : MonoBehaviour
 
     private Camera _camera;
 
+    private GameObject localPlayer;
+
     private void Start()
     {
         _camera = Camera.main;
         SpawnLocalPlayer();
     }
 
+    public void RespawnPlayer()
+    {
+        if (LobbyManager.Instance.currentLobby == CSteamID.Nil) return;
+
+        string slotMeta = SteamMatchmaking.GetLobbyMemberData(
+            LobbyManager.Instance.currentLobby,
+            SteamUser.GetSteamID(),
+            "slot"
+        );
+
+        string[] split = slotMeta.Split('_');
+        int teamNum = int.Parse(split[0]);
+        int slotNum = int.Parse(split[1]);
+
+        Transform spawnPoint = teams[teamNum - 1].slots[slotNum - 1];
+
+        localPlayer.transform.position = spawnPoint.position;
+    }
+
     void SpawnLocalPlayer()
     {
         if (LobbyManager.Instance.currentLobby == CSteamID.Nil) return;
 
-        // Get my slot metadata from lobby
         string slotMeta = SteamMatchmaking.GetLobbyMemberData(
             LobbyManager.Instance.currentLobby,
             SteamUser.GetSteamID(),
@@ -35,16 +55,14 @@ public class GameSpawnManager : MonoBehaviour
 
         if (string.IsNullOrEmpty(slotMeta)) return;
 
-        // slotMeta format: "team_slot" (e.g., "3_2")
         string[] split = slotMeta.Split('_');
-        int teamNum = int.Parse(split[0]); // 1–9
-        int slotNum = int.Parse(split[1]); // 1–2
+        int teamNum = int.Parse(split[0]); 
+        int slotNum = int.Parse(split[1]); 
 
         Transform spawnPoint = teams[teamNum - 1].slots[slotNum - 1];
-        GameObject playerPrefab = Resources.Load<GameObject>($"PlayerShip_{teamNum}"); // prefab in Resources folder
-
+        GameObject playerPrefab = Resources.Load<GameObject>($"PlayerShip_{teamNum}");
         
-        GameObject localPlayer = Instantiate(playerPrefab, spawnPoint.position, spawnPoint.rotation);
+        localPlayer = Instantiate(playerPrefab, spawnPoint.position, spawnPoint.rotation);
         var trails = localPlayer.GetComponentsInChildren<TrailRenderer>();
 
         MaterialPropertyBlock trailBlock = new();

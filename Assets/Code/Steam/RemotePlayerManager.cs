@@ -37,6 +37,10 @@ public class RemotePlayerManager : MonoBehaviour
             player.GetComponent<PlayerMovement>().enabled = false;
         }
 
+        player.SetActive(msg.isAlive);
+
+        if (!msg.isAlive) return;
+
         Rigidbody2D rb = player.GetComponent<Rigidbody2D>();
         PlayerMovement remotePlayerMovement = player.GetComponent<PlayerMovement>();
         rb.position = Vector2.Lerp(rb.position, new Vector2(msg.posX, msg.posY), 0.2f);

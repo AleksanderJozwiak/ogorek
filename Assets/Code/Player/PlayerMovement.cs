@@ -18,6 +18,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float trailFadeOutTime = 2f;
 
     private Rigidbody2D shipRigidbody;
+    private PlayerHealth playerHealth;
 
     float thrustInput;
     float turnInput;
@@ -33,12 +34,14 @@ public class PlayerMovement : MonoBehaviour
     {
         shipRigidbody = GetComponent<Rigidbody2D>();
         menuManager = FindAnyObjectByType<MenuManager>();
+        playerHealth = GetComponent<PlayerHealth>();
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
 
     private void Update()
     {
+        isAlive = playerHealth.IsAlive();
         if (!isAlive) return;
 
         HandleInputs();
@@ -68,6 +71,7 @@ public class PlayerMovement : MonoBehaviour
             velX = shipRigidbody.linearVelocity.x,
             velY = shipRigidbody.linearVelocity.y,
             emmitingTrail = Input.GetKey(KeyCode.W),
+            isAlive = isAlive,
         };
 
         SteamNetworkManager.SendPlayerState(msg);
