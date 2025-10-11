@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 [ExecuteAlways]
@@ -25,7 +26,6 @@ public class Wrap : MonoBehaviour
         Vector2 pos = rb ? rb.position : (Vector2)transform.position;
         float r = GetRadius();
 
-        // Predictive wrap offset
         Vector2 wrapOffset = Vector2.zero;
 
         if (pos.x < MinX - r) wrapOffset.x = size.x;
@@ -34,18 +34,35 @@ public class Wrap : MonoBehaviour
         if (pos.y < MinY - r) wrapOffset.y = size.y;
         else if (pos.y > MaxY + r) wrapOffset.y = -size.y;
 
-        // Apply the wrap offset smoothly to the camera
         if (wrapOffset != Vector2.zero && Camera.main)
         {
             Camera.main.transform.position += new Vector3(wrapOffset.x, wrapOffset.y, 0f);
         }
 
-        // Apply the actual wrap to the player
+        
+
         if (wrapOffset != Vector2.zero)
         {
+            var trails = GetComponentsInChildren<TrailRenderer>();
+            foreach (TrailRenderer trail in trails)
+            {
+                trail.gameObject.SetActive(false);
+            }
+
             pos += wrapOffset;
             if (rb) rb.position = pos;
             else transform.position = pos;
+
+            StartCoroutine(ReenableTrailsAfterDelay(trails, 0.5f));
+        } 
+    }
+    private IEnumerator ReenableTrailsAfterDelay(TrailRenderer[] trails, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
+        foreach (TrailRenderer trail in trails)
+        {
+            trail.gameObject.SetActive(true);
         }
     }
 
