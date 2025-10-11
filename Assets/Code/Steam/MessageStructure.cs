@@ -4,7 +4,8 @@ using System;
 public enum PacketType : byte
 {
     PlayerState = 1,
-    Shoot = 2
+    Shoot = 2,
+    Planet = 3,
 }
 
 [System.Serializable]

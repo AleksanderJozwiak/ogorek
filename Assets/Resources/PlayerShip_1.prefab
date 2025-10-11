@@ -44,7 +44,6 @@ GameObject:
   - component: {fileID: 4860007072898237336}
   - component: {fileID: 4662764669599792989}
   - component: {fileID: 7541622698050996204}
-  - component: {fileID: 7982444950971560506}
   - component: {fileID: 7536269813053903712}
   m_Layer: 0
   m_Name: PlayerShip_1
@@ -228,22 +227,6 @@ MonoBehaviour:
   - {fileID: 1495411348592358616}
   trailLifetime: 0.5
   trailFadeOutTime: 2
---- !u!114 &7982444950971560506
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6265444818785375990}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 080d84d9e491a8340ba43d4ed14d9976, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  center: {x: 0, y: 0}
-  size: {x: 200, y: 120}
-  useRadius: 1
-  radiusOverride: -1
 --- !u!114 &7536269813053903712
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -258,8 +241,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   center: {x: 0, y: 0}
   size: {x: 100, y: 100}
-  useRadius: 0
-  radiusOverride: -1
 --- !u!1001 &178611256657361401
 PrefabInstance:
   m_ObjectHideFlags: 0
