@@ -14,6 +14,7 @@ public class RemotePlayerManager : MonoBehaviour
 
     public void UpdateRemotePlayer(PlayerStateMessage msg)
     {
+
         if (!remotePlayers.TryGetValue(msg.steamId, out GameObject player))
         {
             if (LobbyManager.Instance.currentLobby == CSteamID.Nil) return;
@@ -25,23 +26,40 @@ public class RemotePlayerManager : MonoBehaviour
             int teamNum = int.Parse(split[0]);
             GameObject playerPrefab = Resources.Load<GameObject>($"PlayerShip_{teamNum}");
             player = Instantiate(playerPrefab, new Vector2(msg.posX, msg.posY), Quaternion.Euler(0, 0, msg.rot));
-            var trails = player.GetComponentsInChildren<TrailRenderer>();
-
+            var trailsRenderer = player.GetComponentsInChildren<TrailRenderer>();
             MaterialPropertyBlock trailBlock = new();
             trailBlock.SetColor("_TeamColor", colorPalette.Colors[teamNum - 1]);
-            foreach (TrailRenderer trail in trails)
+            foreach (TrailRenderer trail in trailsRenderer)
             {
                 trail.SetPropertyBlock(trailBlock);
             }
             remotePlayers[msg.steamId] = player;
-            player.GetComponent<PlayerMovement>().enabled = false; // disable input on remotes
+            player.GetComponent<PlayerMovement>().enabled = false;
         }
 
-        // Smooth interpolation instead of snapping:
         Rigidbody2D rb = player.GetComponent<Rigidbody2D>();
+        PlayerMovement remotePlayerMovement = player.GetComponent<PlayerMovement>();
         rb.position = Vector2.Lerp(rb.position, new Vector2(msg.posX, msg.posY), 0.2f);
         rb.rotation = msg.rot;
         rb.linearVelocity = new Vector2(msg.velX, msg.velY);
+
+        var trails = player.GetComponentsInChildren<TrailRenderer>();
+        if (msg.emmitingTrail)
+        {
+            foreach (TrailRenderer trail in trails)
+            {
+                trail.emitting = true;
+                trail.time = remotePlayerMovement.GetTrialLifetime();
+            }
+        }
+        else
+        {
+            foreach (TrailRenderer trail in trails)
+            {
+                trail.time = Mathf.Max(0f, trail.time - remotePlayerMovement.GetTrailFadeOutTime() * Time.deltaTime);
+                trail.emitting = trail.time > 0f;
+            }
+        }
     }
 
     public void SpawnRemoteBullet(ShootMessage msg)
@@ -56,7 +74,7 @@ public class RemotePlayerManager : MonoBehaviour
         rb.angularVelocity = 0f;
 
         Vector2 dir = new Vector2(msg.dirX, msg.dirY).normalized;
-        rb.AddForce(dir * 8f, ForceMode2D.Impulse); // use same bullet speed as local
+        rb.AddForce(dir * 8f, ForceMode2D.Impulse); 
     }
 
     public void RemoveRemotePlayer(ulong steamId)

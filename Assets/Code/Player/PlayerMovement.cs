@@ -26,6 +26,9 @@ public class PlayerMovement : MonoBehaviour
 
     private MenuManager menuManager;
 
+    public float GetTrialLifetime() => trailLifetime;
+    public float GetTrailFadeOutTime() => trailFadeOutTime;
+
     private void Start()
     {
         shipRigidbody = GetComponent<Rigidbody2D>();
@@ -63,7 +66,8 @@ public class PlayerMovement : MonoBehaviour
             posY = transform.position.y,
             rot = transform.eulerAngles.z,
             velX = shipRigidbody.linearVelocity.x,
-            velY = shipRigidbody.linearVelocity.y
+            velY = shipRigidbody.linearVelocity.y,
+            emmitingTrail = Input.GetKey(KeyCode.W),
         };
 
         SteamNetworkManager.SendPlayerState(msg);

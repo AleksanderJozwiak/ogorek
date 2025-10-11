@@ -1,21 +1,16 @@
-using System.Collections;
 using UnityEngine;
 
 [ExecuteAlways]
+[RequireComponent(typeof(Rigidbody2D))]
 public class Wrap : MonoBehaviour
 {
     public Vector2 center = Vector2.zero;
     public Vector2 size = new Vector2(200f, 120f);
 
-    public bool useRadius = true;
-    public float radiusOverride = -1f;
-
     Rigidbody2D rb;
 
-    float MinX => center.x - size.x * 0.5f;
-    float MaxX => center.x + size.x * 0.5f;
-    float MinY => center.y - size.y * 0.5f;
-    float MaxY => center.y + size.y * 0.5f;
+    float HalfWidth => size.x * 0.5f;
+    float HalfHeight => size.y * 0.5f;
 
     void Awake() => rb = GetComponent<Rigidbody2D>();
 
@@ -23,61 +18,29 @@ public class Wrap : MonoBehaviour
     {
         if (!Application.isPlaying) return;
 
-        Vector2 pos = rb ? rb.position : (Vector2)transform.position;
-        float r = GetRadius();
+        Vector2 pos = rb.position;
 
-        Vector2 wrapOffset = Vector2.zero;
+        pos.x = WrapCoordinate(pos.x, center.x - HalfWidth, center.x + HalfWidth);
+        pos.y = WrapCoordinate(pos.y, center.y - HalfHeight, center.y + HalfHeight);
 
-        if (pos.x < MinX - r) wrapOffset.x = size.x;
-        else if (pos.x > MaxX + r) wrapOffset.x = -size.x;
-
-        if (pos.y < MinY - r) wrapOffset.y = size.y;
-        else if (pos.y > MaxY + r) wrapOffset.y = -size.y;
-
-        if (wrapOffset != Vector2.zero && Camera.main)
-        {
-            Camera.main.transform.position += new Vector3(wrapOffset.x, wrapOffset.y, 0f);
-        }
-
+        rb.position = pos;
         
-
-        if (wrapOffset != Vector2.zero)
-        {
-            var trails = GetComponentsInChildren<TrailRenderer>();
-            foreach (TrailRenderer trail in trails)
-            {
-                trail.gameObject.SetActive(false);
-            }
-
-            pos += wrapOffset;
-            if (rb) rb.position = pos;
-            else transform.position = pos;
-
-            StartCoroutine(ReenableTrailsAfterDelay(trails, 0.5f));
-        } 
     }
-    private IEnumerator ReenableTrailsAfterDelay(TrailRenderer[] trails, float delay)
+
+    float WrapCoordinate(float value, float min, float max)
     {
-        yield return new WaitForSeconds(delay);
-
-        foreach (TrailRenderer trail in trails)
-        {
-            trail.gameObject.SetActive(true);
-        }
+        float range = max - min;
+        if (range <= 0f) return value;
+        value = (value - min) % range;
+        if (value < 0) value += range;
+        return min + value;
     }
 
-    float GetRadius()
+#if UNITY_EDITOR
+    void OnDrawGizmosSelected()
     {
-        if (!useRadius) return 0f;
-        if (radiusOverride > 0f) return radiusOverride;
-
-        float r = 0f;
-        var col = GetComponent<Collider2D>();
-        if (col) r = Mathf.Max(r, col.bounds.extents.magnitude * 0.7f);
-
-        var sr = GetComponent<SpriteRenderer>();
-        if (sr) r = Mathf.Max(r, sr.bounds.extents.magnitude * 0.7f);
-
-        return r;
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawWireCube(center, size);
     }
+#endif
 }
