@@ -127,9 +127,9 @@ Material:
     - _SpecularHighlights: 1
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
-    - _StarHeight: 10000
+    - _StarHeight: 5000
     - _StarIntensity: 50
-    - _StarPower: 45
+    - _StarPower: 40
     - _Surface: 0
     - _WorkflowMode: 1
     - _ZWrite: 1

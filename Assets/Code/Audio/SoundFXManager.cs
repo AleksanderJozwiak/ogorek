@@ -7,7 +7,8 @@ using System;
 //NEW SOUND TYPES ALWAYS ADD AT THE BOTTOM OF THE LIST
 public enum SoundType
 {
-    SucceedParry
+    Blaster,
+    PlanetExplode
 }
 
 [ExecuteInEditMode]
@@ -16,7 +17,6 @@ public class SoundFXManager : MonoBehaviour
     public static SoundFXManager Instance;
     public AudioMixerGroup mixerGroup;
 
-    [SerializeField] AudioSource soundFXObject;
     [Tooltip("Add new sound types via code.")]
     [SerializeField] SoundList[] soundList;
 
@@ -78,6 +78,9 @@ public class SoundFXManager : MonoBehaviour
 
         // GET OBJECT FROM THE POOL
         GameObject poolObject = PoolManager.Instance.PoolMap[PoolCategory.SoundFX].Get();
+
+        // ASSIGN NEW POSITION
+        poolObject.transform.position = spawnTransform.position;
 
         // GET REFERENCE TO THE AUDIO SOURCE
         AudioSource audioSource = poolObject.GetComponent<AudioSource>();

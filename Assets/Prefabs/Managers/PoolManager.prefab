@@ -46,10 +46,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   poolConfigs:
   - name: SoundFX
-    prefab: {fileID: 0}
-    minSize: 0
-    maxSize: 1
-    preWarmPool: 0
+    prefab: {fileID: 1129072728336597268, guid: 522466340f21f17499b093e151920def, type: 3}
+    minSize: 24
+    maxSize: 36
+    preWarmPool: 1
   - name: Bullets
     prefab: {fileID: 5014705353480152817, guid: 2f60a461af759ea48b39f846ae335615, type: 3}
     minSize: 20

@@ -124,6 +124,8 @@ public class PlayerMovement : MonoBehaviour
 
         rb.linearVelocity = shipDirection * shipForwardSpeed;
         rb.AddForce(bulletSpeed * (Vector2)transform.up, ForceMode2D.Impulse);
+
+        SoundFXManager.Instance.PlaySound2D(SoundType.Blaster, transform, 1f);
     }
 
     private void HandleShooting()
