@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class PlanetHealth : MonoBehaviour
 {
+    [SerializeField] private int teamNumber = 1;
     [SerializeField] private float maxHealth = 30f;
     [SerializeField] private float currentHealth;
 
@@ -20,6 +21,8 @@ public class PlanetHealth : MonoBehaviour
             hittableMaterial = Instantiate(spriteRenderer.material);
             spriteRenderer.material = hittableMaterial;
         }
+
+        SendTeamBaseState(teamNumber, true);
     }
 
     private void TakeDamage(float damage)
@@ -53,9 +56,33 @@ public class PlanetHealth : MonoBehaviour
     private void DestroyTeam()
     {
         hittableMaterial.SetFloat("_HitColorAmount", 0);
-        // temp
         Destroy(gameObject);
-        // wys³aæ do steam coœ
+
+        if (LobbyManager.Instance != null &&
+            SteamUser.GetSteamID().m_SteamID == SteamMatchmaking.GetLobbyOwner(LobbyManager.Instance.currentLobby).m_SteamID)
+        {
+            SendTeamBaseState(teamNumber, false);
+        }
+    }
+
+    private void SendTeamBaseState(int teamNum, bool alive)
+    {
+        TeamBaseMessage msg = new()
+        {
+            teamNumber = teamNum,
+            baseAlive = alive
+        };
+
+        byte[] data = NetworkHelpers.StructToBytes(msg);
+        byte[] packet = new byte[data.Length + 1];
+        packet[0] = (byte)PacketType.TeamBaseDestroyed;
+        System.Buffer.BlockCopy(data, 0, packet, 1, data.Length);
+
+        foreach (CSteamID member in LobbyManager.Instance.GetAllLobbyMembers())
+        {
+            if (member != SteamUser.GetSteamID())
+                SteamNetworking.SendP2PPacket(member, packet, (uint)packet.Length, EP2PSend.k_EP2PSendReliable);
+        }
     }
 
     private void OnTriggerEnter2D(Collider2D collision)

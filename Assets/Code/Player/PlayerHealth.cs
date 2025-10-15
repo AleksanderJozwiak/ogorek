@@ -68,13 +68,38 @@ public class PlayerHealth : MonoBehaviour
 
         if (isLocalPlayer)
         {
-            gameSpawnManager.ShowRespawnUI(true);
-            PoolManager.Instance.StartCoroutine(RespawnCooldown());
-        }
+            string slotMeta = SteamMatchmaking.GetLobbyMemberData(
+                LobbyManager.Instance.currentLobby,
+                SteamUser.GetSteamID(),
+                "slot"
+            );
 
-        gameObject.SetActive(false);
-        SendDeathState(false);
+            if (!string.IsNullOrEmpty(slotMeta))
+            {
+                string[] split = slotMeta.Split('_');
+                int teamNum = int.Parse(split[0]);
+
+                if (gameSpawnManager.IsTeamBaseAlive(teamNum))
+                {
+                    gameSpawnManager.ShowRespawnUI(true);
+                    PoolManager.Instance.StartCoroutine(RespawnCooldown());
+                }
+                else
+                {
+                    gameSpawnManager.StartSpectateMode();
+                    gameObject.SetActive(false);
+                    SendDeathState(false);
+                }
+            }
+        }
+        else
+        {
+            gameObject.SetActive(false);
+            SendDeathState(false);
+        }
     }
+
+
 
     IEnumerator RespawnCooldown()
     {
@@ -89,8 +114,8 @@ public class PlayerHealth : MonoBehaviour
         currentHealth = maxHealth;
         gameSpawnManager.ShowRespawnUI(false);
 
-        gameSpawnManager.RespawnPlayer(gameObject);
         gameObject.SetActive(true);
+        gameSpawnManager.RespawnPlayer(gameObject);
         SendDeathState(true);
     }
 

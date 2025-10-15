@@ -46,6 +46,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b80ac9b44c11ff641a9885065ef33861, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlanetHealth
+  teamNumber: 6
   maxHealth: 30
   currentHealth: 0
 --- !u!58 &1756776575359861057
@@ -109,7 +110,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 43bbc3fc1212d674893a642e0714fd34, type: 2}
+  - {fileID: 2100000, guid: b4a95dc79755118459d1ef06aff65c79, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

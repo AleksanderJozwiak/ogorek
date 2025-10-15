@@ -1,6 +1,7 @@
 using UnityEngine;
 using Steamworks;
 using TMPro;
+using System.Collections.Generic;
 
 [System.Serializable]
 public class TeamSpawnPoints
@@ -19,11 +20,31 @@ public class GameSpawnManager : MonoBehaviour
     private Camera _camera;
     private GameObject localPlayer;
 
+    public static GameSpawnManager Instance;
+    private Dictionary<int, bool> teamBaseAlive = new();
+    private bool isSpectating = false;
+    private int currentSpectateIndex = 0;
+    private List<Transform> livePlayers = new();
+
+    private void Awake()
+    {
+        Instance = this;
+    }
+
     private void Start()
     {
         _camera = Camera.main;
         SpawnLocalPlayer();
         ShowRespawnUI(false);
+    }
+
+    private void Update()
+    {
+        if (isSpectating && Input.GetKeyDown(KeyCode.Space))
+        {
+            UpdateSpectateTargets();
+            SwitchSpectateTarget();
+        }
     }
 
     public void RespawnPlayer(GameObject playerToRespawn)
@@ -90,5 +111,39 @@ public class GameSpawnManager : MonoBehaviour
 
         localPlayer.GetComponent<PlayerMovement>().enabled = true;
         _camera.GetComponent<CameraFollow>().target = localPlayer.transform;
+    }
+
+    public void SetTeamBaseState(int team, bool alive)
+    {
+        teamBaseAlive[team] = alive;
+    }
+
+    public bool IsTeamBaseAlive(int team)
+    {
+        return teamBaseAlive.TryGetValue(team, out bool alive) && alive;
+    }
+
+    public void StartSpectateMode()
+    {
+        ShowRespawnUI(false);
+        isSpectating = true;
+        UpdateSpectateTargets();
+        SwitchSpectateTarget();
+    }
+    private void UpdateSpectateTargets()
+    {
+        livePlayers.Clear();
+        foreach (var player in FindObjectsByType<PlayerHealth>(FindObjectsSortMode.None))
+        {
+            if (player.IsAlive())
+                livePlayers.Add(player.transform);
+        }
+    }
+
+    private void SwitchSpectateTarget()
+    {
+        if (livePlayers.Count == 0) return;
+        currentSpectateIndex = (currentSpectateIndex + 1) % livePlayers.Count;
+        _camera.GetComponent<CameraFollow>().target = livePlayers[currentSpectateIndex];
     }
 }

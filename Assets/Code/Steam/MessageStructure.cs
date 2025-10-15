@@ -5,7 +5,7 @@ public enum PacketType : byte
 {
     PlayerState = 1,
     Shoot = 2,
-    Planet = 3,
+    TeamBaseDestroyed = 3,
 }
 
 [System.Serializable]
@@ -27,6 +27,14 @@ public struct ShootMessage
     public float rot;
     public float dirX, dirY;
 }
+
+[System.Serializable]
+public struct TeamBaseMessage
+{
+    public int teamNumber;
+    public bool baseAlive;
+}
+
 
 public class NetworkHelpers
 {

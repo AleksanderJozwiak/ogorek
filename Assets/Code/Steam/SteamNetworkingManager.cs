@@ -38,6 +38,13 @@ public class SteamNetworkingManager : MonoBehaviour
                         var shoot = NetworkHelpers.BytesToStruct<ShootMessage>(data);
                         RemotePlayerManager.Instance.SpawnRemoteBullet(shoot);
                         break;
+
+                    case PacketType.TeamBaseDestroyed:
+                    {
+                        TeamBaseMessage msg = NetworkHelpers.BytesToStruct<TeamBaseMessage>(data);
+                        GameSpawnManager.Instance.SetTeamBaseState(msg.teamNumber, msg.baseAlive);
+                        break;
+                    }
                 }
             }
         }
