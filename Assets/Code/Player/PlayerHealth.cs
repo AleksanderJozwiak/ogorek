@@ -7,6 +7,11 @@ public class PlayerHealth : MonoBehaviour
     [SerializeField] private float maxHealth = 30f;
     [SerializeField] private float currentHealth;
     [SerializeField] private float respawnTime = 5f;
+
+    private Material hittableMaterial;
+    private SpriteRenderer spriteRenderer;
+    private Coroutine hitEffectCoroutine;
+
     private GameSpawnManager gameSpawnManager;
     private bool isLocalPlayer;
     public bool IsAlive() => currentHealth > 0;
@@ -16,10 +21,14 @@ public class PlayerHealth : MonoBehaviour
         currentHealth = maxHealth;
         gameSpawnManager = FindAnyObjectByType<GameSpawnManager>();
 
-        // Sprawdü czy to lokalny gracz
-        var playerId = GetComponent<PlayerIdentity>();
-        if (playerId != null)
+        if (TryGetComponent<PlayerIdentity>(out var playerId))
             isLocalPlayer = playerId.SteamId == SteamUser.GetSteamID();
+
+        if (TryGetComponent(out spriteRenderer))
+        {
+            hittableMaterial = Instantiate(spriteRenderer.material);
+            spriteRenderer.material = hittableMaterial;
+        }
     }
 
     public void TakeDamage(float damage)
@@ -29,13 +38,33 @@ public class PlayerHealth : MonoBehaviour
         currentHealth -= damage;
         currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
 
+        if (spriteRenderer != null && hittableMaterial != null)
+        {
+            if (hitEffectCoroutine != null)
+                StopCoroutine(hitEffectCoroutine);
+            hitEffectCoroutine = StartCoroutine(HitFlashEffect());
+        }
+
         if (currentHealth <= 0)
             Die();
+    }
+
+    private IEnumerator HitFlashEffect()
+    {
+        float flashTime = 0.75f;
+
+        while (flashTime > 0)
+        {
+            hittableMaterial.SetFloat("_HitColorAmount", flashTime);
+            yield return new WaitForSeconds(0.01f);
+            flashTime -= 0.02f;
+        }
     }
 
     private void Die()
     {
         currentHealth = 0;
+        hittableMaterial.SetFloat("_HitColorAmount", 0);
 
         if (isLocalPlayer)
         {
@@ -67,7 +96,7 @@ public class PlayerHealth : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        // layer bullet
+        // layer bullet, team tag?
         if (collision.gameObject.layer == 7)
         {
             TakeDamage(1);
@@ -77,7 +106,6 @@ public class PlayerHealth : MonoBehaviour
 
     private void SendDeathState(bool alive)
     {
-        // Wysy≥amy pakiet do innych graczy z aktualnym stanem
         PlayerStateMessage msg = new PlayerStateMessage
         {
             steamId = SteamUser.GetSteamID().m_SteamID,
