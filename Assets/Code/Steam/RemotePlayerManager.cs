@@ -35,10 +35,11 @@ public class RemotePlayerManager : MonoBehaviour
             }
             remotePlayers[msg.steamId] = player;
             player.GetComponent<PlayerMovement>().enabled = false;
+            var id = player.AddComponent<PlayerIdentity>();
+            id.SteamId = new CSteamID(msg.steamId);
         }
 
         player.SetActive(msg.isAlive);
-
         if (!msg.isAlive) return;
 
         Rigidbody2D rb = player.GetComponent<Rigidbody2D>();

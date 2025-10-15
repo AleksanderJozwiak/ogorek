@@ -207,6 +207,24 @@ public class LobbyManager : MonoBehaviour
     }
     #endregion
 
+    public List<CSteamID> GetAllLobbyMembers()
+    {
+        List<CSteamID> members = new();
+
+        if (currentLobby == CSteamID.Nil)
+            return members;
+
+        int count = SteamMatchmaking.GetNumLobbyMembers(currentLobby);
+        for (int i = 0; i < count; i++)
+        {
+            CSteamID member = SteamMatchmaking.GetLobbyMemberByIndex(currentLobby, i);
+            members.Add(member);
+        }
+
+        return members;
+    }
+
+
     public int GetLobbyPlayerCount(CSteamID lobbyId)
     {
         return SteamMatchmaking.GetNumLobbyMembers(lobbyId);

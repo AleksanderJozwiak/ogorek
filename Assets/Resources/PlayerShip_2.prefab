@@ -218,10 +218,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5c35672915d22c34eaa09cd52a2e7810, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  shipAcceleration: 2
-  shipMaxVelocity: 3
+  shipAcceleration: 3
+  shipMaxVelocity: 5
   shipRotationSpeed: 100
-  bulletSpeed: 8
+  bulletSpeed: 10
   bulletSpawn: {fileID: 7990644788345452046}
   trailRenderers:
   - {fileID: 5941153928447005197}
@@ -241,7 +241,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   center: {x: 0, y: 0}
-  size: {x: 100, y: 100}
+  size: {x: 175, y: 175}
 --- !u!114 &-6014934051022294397
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -256,6 +256,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerHealth
   maxHealth: 5
   currentHealth: 0
+  respawnTime: 5
 --- !u!1001 &178611256657361401
 PrefabInstance:
   m_ObjectHideFlags: 0
