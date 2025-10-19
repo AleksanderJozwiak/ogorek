@@ -22,8 +22,12 @@ public class PlanetHealth : MonoBehaviour
             spriteRenderer.material = hittableMaterial;
         }
 
-        SendTeamBaseState(teamNumber, true);
+        GameSpawnManager.Instance.SetTeamBaseState(teamNumber, true);
+
+        if (SteamUser.GetSteamID().m_SteamID == SteamMatchmaking.GetLobbyOwner(LobbyManager.Instance.currentLobby).m_SteamID)
+            SendTeamBaseState(teamNumber, true);
     }
+
 
     private void TakeDamage(float damage)
     {
@@ -61,9 +65,11 @@ public class PlanetHealth : MonoBehaviour
         if (LobbyManager.Instance != null &&
             SteamUser.GetSteamID().m_SteamID == SteamMatchmaking.GetLobbyOwner(LobbyManager.Instance.currentLobby).m_SteamID)
         {
+            GameSpawnManager.Instance.SetTeamBaseState(teamNumber, false);
             SendTeamBaseState(teamNumber, false);
         }
     }
+
 
     private void SendTeamBaseState(int teamNum, bool alive)
     {

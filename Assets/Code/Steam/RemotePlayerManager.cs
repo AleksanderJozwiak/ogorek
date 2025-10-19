@@ -40,7 +40,12 @@ public class RemotePlayerManager : MonoBehaviour
         }
 
         player.SetActive(msg.isAlive);
-        if (!msg.isAlive) return;
+        if (!msg.isAlive)
+        {
+            foreach (var trail in player.GetComponentsInChildren<TrailRenderer>())
+                trail.Clear();
+            return;
+        }
 
         Rigidbody2D rb = player.GetComponent<Rigidbody2D>();
         PlayerMovement remotePlayerMovement = player.GetComponent<PlayerMovement>();

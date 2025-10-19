@@ -133,17 +133,40 @@ public class GameSpawnManager : MonoBehaviour
     private void UpdateSpectateTargets()
     {
         livePlayers.Clear();
-        foreach (var player in FindObjectsByType<PlayerHealth>(FindObjectsSortMode.None))
+        foreach (var identity in FindObjectsByType<PlayerIdentity>(FindObjectsSortMode.None))
         {
-            if (player.IsAlive())
-                livePlayers.Add(player.transform);
+            if (identity.SteamId == SteamUser.GetSteamID())
+                continue;
+
+            GameObject playerGO = identity.gameObject;
+            if (playerGO.TryGetComponent<PlayerHealth>(out var health))
+            {
+                if (health.IsAlive())
+                    livePlayers.Add(playerGO.transform);
+            }
+            else
+            {
+                if (playerGO.activeSelf)
+                    livePlayers.Add(playerGO.transform);
+            }
         }
     }
 
+
+
     private void SwitchSpectateTarget()
     {
-        if (livePlayers.Count == 0) return;
+        if (livePlayers.Count == 0)
+        {
+            Debug.Log("No live players to spectate.");
+            return;
+        }
+
         currentSpectateIndex = (currentSpectateIndex + 1) % livePlayers.Count;
-        _camera.GetComponent<CameraFollow>().target = livePlayers[currentSpectateIndex];
+        Transform nextTarget = livePlayers[currentSpectateIndex];
+
+        _camera.GetComponent<CameraFollow>().target = nextTarget;
+        Debug.Log($"Spectating: {nextTarget.name}");
     }
+
 }

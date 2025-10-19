@@ -82,7 +82,9 @@ public class PlayerHealth : MonoBehaviour
                 if (gameSpawnManager.IsTeamBaseAlive(teamNum))
                 {
                     gameSpawnManager.ShowRespawnUI(true);
-                    PoolManager.Instance.StartCoroutine(RespawnCooldown());
+                    gameObject.SetActive(false);
+                    SendDeathState(false);
+                    GameSpawnManager.Instance.StartCoroutine(RespawnCooldown());
                 }
                 else
                 {

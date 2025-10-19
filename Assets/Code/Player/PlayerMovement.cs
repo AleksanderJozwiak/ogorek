@@ -25,15 +25,12 @@ public class PlayerMovement : MonoBehaviour
 
     private bool isAlive = true;
 
-    private MenuManager menuManager;
-
     public float GetTrialLifetime() => trailLifetime;
     public float GetTrailFadeOutTime() => trailFadeOutTime;
 
     private void Start()
     {
         shipRigidbody = GetComponent<Rigidbody2D>();
-        menuManager = FindAnyObjectByType<MenuManager>();
         playerHealth = GetComponent<PlayerHealth>();
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
@@ -105,8 +102,6 @@ public class PlayerMovement : MonoBehaviour
         turnInput = 0f;
         if (Input.GetKey(KeyCode.A)) turnInput += 1f;
         if (Input.GetKey(KeyCode.D)) turnInput -= 1f;
-
-        if (Input.GetKeyDown(KeyCode.Escape)) menuManager.TogglePauseMenu();
     }
 
     private void FireBullet()
