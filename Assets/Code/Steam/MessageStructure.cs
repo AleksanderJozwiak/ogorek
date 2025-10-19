@@ -6,6 +6,7 @@ public enum PacketType : byte
     PlayerState = 1,
     Shoot = 2,
     TeamBaseDestroyed = 3,
+    PlayerHit = 4,
 }
 
 [System.Serializable]
@@ -35,6 +36,12 @@ public struct TeamBaseMessage
     public bool baseAlive;
 }
 
+[System.Serializable]
+public struct PlayerHitMessage
+{
+    public ulong steamId;
+    public float damage;
+}
 
 public class NetworkHelpers
 {
