@@ -2,7 +2,7 @@ using System.Collections;
 using UnityEngine;
 using Steamworks;
 
-public class PlayerHealth : MonoBehaviour
+public class PlayerHealth : MonoBehaviour, IDamageable
 {
     [SerializeField] private float maxHealth = 30f;
     [SerializeField] private float currentHealth;

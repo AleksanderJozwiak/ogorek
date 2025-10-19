@@ -1,8 +1,8 @@
-using Steamworks;
-using System.Collections;
 using UnityEngine;
+using System.Collections;
+using Steamworks;
 
-public class PlanetHealth : MonoBehaviour
+public class PlanetHealth : MonoBehaviour, IDamageable
 {
     [SerializeField] private int teamNumber = 1;
     [SerializeField] private float maxHealth = 30f;
@@ -25,10 +25,10 @@ public class PlanetHealth : MonoBehaviour
         SendTeamBaseState(teamNumber, true);
     }
 
-    private void TakeDamage(float damage)
+    public void TakeDamage(float damage)
     {
         currentHealth -= damage;
-        gameObject.transform.localScale -= new Vector3(damage * 0.01f, damage * 0.01f, damage * 0.01f);
+        transform.localScale -= new Vector3(damage * 0.01f, damage * 0.01f, 0);
         currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
 
         if (spriteRenderer != null && hittableMaterial != null)
@@ -38,7 +38,8 @@ public class PlanetHealth : MonoBehaviour
             hitEffectCoroutine = StartCoroutine(HitFlashEffect());
         }
 
-        if (currentHealth <= 0) DestroyTeam();
+        if (currentHealth <= 0)
+            DestroyTeam();
     }
 
     private IEnumerator HitFlashEffect()
@@ -84,15 +85,5 @@ public class PlanetHealth : MonoBehaviour
                 SteamNetworking.SendP2PPacket(member, packet, (uint)packet.Length, EP2PSend.k_EP2PSendReliable);
         }
     }
-
-    private void OnTriggerEnter2D(Collider2D collision)
-    {
-        // layer bullet
-        if (collision.gameObject.layer == 7)
-        {
-            TakeDamage(1);
-            collision.gameObject.SetActive(false);
-        }
-    }
-
 }
+

@@ -7256,6 +7256,22 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7670187617360462471, guid: c46fc69274c2ec04db5e1af61f52d3b4, type: 3}
+      propertyPath: poolConfigs.Array.data[4].prefab
+      value: 
+      objectReference: {fileID: 3890623694370909980, guid: a630a04e7d1575d45b8357593f142d1b, type: 3}
+    - target: {fileID: 7670187617360462471, guid: c46fc69274c2ec04db5e1af61f52d3b4, type: 3}
+      propertyPath: poolConfigs.Array.data[4].maxSize
+      value: 30
+      objectReference: {fileID: 0}
+    - target: {fileID: 7670187617360462471, guid: c46fc69274c2ec04db5e1af61f52d3b4, type: 3}
+      propertyPath: poolConfigs.Array.data[4].minSize
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7670187617360462471, guid: c46fc69274c2ec04db5e1af61f52d3b4, type: 3}
+      propertyPath: poolConfigs.Array.data[4].preWarmPool
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
