@@ -22,7 +22,6 @@ public class SteamNetworkingManager : MonoBehaviour
             CSteamID remoteId;
             if (SteamNetworking.ReadP2PPacket(buffer, msgSize, out bytesRead, out remoteId))
             {
-                // First byte = message type
                 PacketType type = (PacketType)buffer[0];
                 byte[] data = new byte[buffer.Length - 1];
                 System.Buffer.BlockCopy(buffer, 1, data, 0, data.Length);
@@ -45,6 +44,13 @@ public class SteamNetworkingManager : MonoBehaviour
                         GameSpawnManager.Instance.SetTeamBaseState(msg.teamNumber, msg.baseAlive);
                         break;
                     }
+
+                    case PacketType.PlayerHit:
+                        {
+                            PlayerHitMessage hit = NetworkHelpers.BytesToStruct<PlayerHitMessage>(data);
+                            RemotePlayerManager.Instance.ShowHitEffect(hit);
+                            break;
+                        }
                 }
             }
         }

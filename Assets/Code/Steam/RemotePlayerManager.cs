@@ -1,4 +1,5 @@
 using Steamworks;
+using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -40,7 +41,12 @@ public class RemotePlayerManager : MonoBehaviour
         }
 
         player.SetActive(msg.isAlive);
-        if (!msg.isAlive) return;
+        if (!msg.isAlive)
+        {
+            foreach (var trail in player.GetComponentsInChildren<TrailRenderer>())
+                trail.Clear();
+            return;
+        }
 
         Rigidbody2D rb = player.GetComponent<Rigidbody2D>();
         PlayerMovement remotePlayerMovement = player.GetComponent<PlayerMovement>();
@@ -66,6 +72,31 @@ public class RemotePlayerManager : MonoBehaviour
             }
         }
     }
+
+    public void ShowHitEffect(PlayerHitMessage msg)
+    {
+        if (!remotePlayers.TryGetValue(msg.steamId, out GameObject player))
+            return;
+
+        if (!player.TryGetComponent<SpriteRenderer>(out var spriteRenderer)) return;
+
+        Material material = spriteRenderer.material;
+        if (material == null) return;
+
+        StartCoroutine(HitFlashRoutine(material));
+    }
+
+    private IEnumerator HitFlashRoutine(Material mat)
+    {
+        float flashTime = 0.75f;
+        while (flashTime > 0)
+        {
+            mat.SetFloat("_HitColorAmount", flashTime);
+            yield return new WaitForSeconds(0.01f);
+            flashTime -= 0.02f;
+        }
+    }
+
 
     public void SpawnRemoteBullet(ShootMessage msg)
     {

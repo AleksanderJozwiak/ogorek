@@ -2,6 +2,7 @@ using UnityEngine;
 using Steamworks;
 using TMPro;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 
 [System.Serializable]
 public class TeamSpawnPoints
@@ -16,6 +17,8 @@ public class GameSpawnManager : MonoBehaviour
     [SerializeField] ColorPalette colorPalette;
     public CanvasGroup RespawnCounter;
     public TMP_Text Counter;
+    public CanvasGroup SpectatorCanvas;
+    public TMP_Text nickname;
 
     private Camera _camera;
     private GameObject localPlayer;
@@ -75,6 +78,11 @@ public class GameSpawnManager : MonoBehaviour
         Counter.text = visible ? "5" : "";
     }
 
+    public void ShowSpectatorUI(bool visible)
+    {
+        SpectatorCanvas.alpha = visible ? 1 : 0;
+    }
+
     public void UpdateRespawnCounter(int seconds)
     {
         Counter.text = seconds.ToString();
@@ -127,23 +135,49 @@ public class GameSpawnManager : MonoBehaviour
     {
         ShowRespawnUI(false);
         isSpectating = true;
+        ShowSpectatorUI(isSpectating);
         UpdateSpectateTargets();
         SwitchSpectateTarget();
     }
     private void UpdateSpectateTargets()
     {
         livePlayers.Clear();
-        foreach (var player in FindObjectsByType<PlayerHealth>(FindObjectsSortMode.None))
+        foreach (var identity in FindObjectsByType<PlayerIdentity>(FindObjectsSortMode.None))
         {
-            if (player.IsAlive())
-                livePlayers.Add(player.transform);
+            if (identity.SteamId == SteamUser.GetSteamID())
+                continue;
+
+            GameObject playerGO = identity.gameObject;
+            if (playerGO.TryGetComponent<PlayerHealth>(out var health))
+            {
+                if (health.IsAlive())
+                    livePlayers.Add(playerGO.transform);
+            }
+            else
+            {
+                if (playerGO.activeSelf)
+                    livePlayers.Add(playerGO.transform);
+            }
         }
     }
 
+
+
     private void SwitchSpectateTarget()
     {
-        if (livePlayers.Count == 0) return;
+        if (livePlayers.Count == 0)
+        {
+            Debug.Log("No live players to spectate.");
+            return;
+        }
+
         currentSpectateIndex = (currentSpectateIndex + 1) % livePlayers.Count;
-        _camera.GetComponent<CameraFollow>().target = livePlayers[currentSpectateIndex];
+        Transform nextTarget = livePlayers[currentSpectateIndex];
+
+        _camera.GetComponent<CameraFollow>().target = nextTarget;
+        CSteamID memberId = nextTarget.gameObject.GetComponent<PlayerIdentity>().SteamId;
+        nickname.text = SteamFriends.GetFriendPersonaName(memberId);
+        Debug.Log($"Spectating: {nextTarget.name}");
     }
+
 }

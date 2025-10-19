@@ -36,6 +36,7 @@ public class PlayerHealth : MonoBehaviour, IDamageable
         if (!IsAlive()) return;
 
         currentHealth -= damage;
+        SendPlayerHit(damage);
         currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
 
         if (spriteRenderer != null && hittableMaterial != null)
@@ -48,6 +49,30 @@ public class PlayerHealth : MonoBehaviour, IDamageable
         if (currentHealth <= 0)
             Die();
     }
+
+    private void SendPlayerHit(float damage)
+    {
+        PlayerIdentity identity = GetComponent<PlayerIdentity>();
+        if (identity == null) return;
+
+        PlayerHitMessage msg = new PlayerHitMessage
+        {
+            steamId = identity.SteamId.m_SteamID,
+            damage = damage
+        };
+
+        byte[] data = NetworkHelpers.StructToBytes(msg);
+        byte[] packet = new byte[data.Length + 1];
+        packet[0] = (byte)PacketType.PlayerHit;
+        System.Buffer.BlockCopy(data, 0, packet, 1, data.Length);
+
+        foreach (CSteamID member in LobbyManager.Instance.GetAllLobbyMembers())
+        {
+            if (member != SteamUser.GetSteamID())
+                SteamNetworking.SendP2PPacket(member, packet, (uint)packet.Length, EP2PSend.k_EP2PSendReliable);
+        }
+    }
+
 
     private IEnumerator HitFlashEffect()
     {
@@ -82,7 +107,9 @@ public class PlayerHealth : MonoBehaviour, IDamageable
                 if (gameSpawnManager.IsTeamBaseAlive(teamNum))
                 {
                     gameSpawnManager.ShowRespawnUI(true);
-                    PoolManager.Instance.StartCoroutine(RespawnCooldown());
+                    gameObject.SetActive(false);
+                    SendDeathState(false);
+                    GameSpawnManager.Instance.StartCoroutine(RespawnCooldown());
                 }
                 else
                 {

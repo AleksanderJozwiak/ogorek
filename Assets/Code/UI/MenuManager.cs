@@ -31,6 +31,11 @@ public class MenuManager : MonoBehaviour
             refreshRoutine = StartCoroutine(AutoRefreshLobbyList());
     }
 
+    private void FixedUpdate()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape)) TogglePauseMenu();
+    }
+
     private IEnumerator WaitForLobbyManager()
     {
         while (LobbyManager.Instance == null)
