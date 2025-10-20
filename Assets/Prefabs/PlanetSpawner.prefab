@@ -55,12 +55,12 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   teamBasePrefabs:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 4926557204887281331, guid: 0a70ee1c8721d264a8ef18a8fe69797f, type: 3}
+  - {fileID: 4926557204887281331, guid: de276987776d9164d8411361db380865, type: 3}
+  - {fileID: 4926557204887281331, guid: e50aaf69ffdef9e419a8d659edb661ac, type: 3}
+  - {fileID: 4926557204887281331, guid: c953033bcb7e8204daea7be832cc35a2, type: 3}
+  - {fileID: 4926557204887281331, guid: 344135eea65c5e64a830c31d34652eb5, type: 3}
+  - {fileID: 4926557204887281331, guid: 075441434b0367044b6641b81735497f, type: 3}
+  - {fileID: 4926557204887281331, guid: b42deb7f0d215254e9c6f42b5443739a, type: 3}
+  - {fileID: 4926557204887281331, guid: 56a54206c7366514f9abd70972da162c, type: 3}
+  - {fileID: 4926557204887281331, guid: 6757f431ea8214f469f8415eac7b038f, type: 3}

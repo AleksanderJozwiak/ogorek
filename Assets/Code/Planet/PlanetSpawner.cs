@@ -44,7 +44,9 @@ public class PlanetSpawner : MonoBehaviour
 
                 if (parent != null && prefab != null)
                 {
-                    Instantiate(prefab, parent.position, Quaternion.identity);
+                    GameObject gameObject = Instantiate(prefab, parent.position, Quaternion.identity);
+                    gameObject.tag = $"Team_{team}";
+                    GameSpawnManager.Instance.SetTeamBaseState(team, true);
                 }
             }
         }

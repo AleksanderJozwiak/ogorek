@@ -11,15 +11,12 @@ public class PlayerHealth : MonoBehaviour, IDamageable
     private Material hittableMaterial;
     private SpriteRenderer spriteRenderer;
     private Coroutine hitEffectCoroutine;
-
-    private GameSpawnManager gameSpawnManager;
     private bool isLocalPlayer;
     public bool IsAlive() => currentHealth > 0;
 
     private void Start()
     {
         currentHealth = maxHealth;
-        gameSpawnManager = FindAnyObjectByType<GameSpawnManager>();
 
         if (TryGetComponent<PlayerIdentity>(out var playerId))
             isLocalPlayer = playerId.SteamId == SteamUser.GetSteamID();
@@ -73,7 +70,6 @@ public class PlayerHealth : MonoBehaviour, IDamageable
         }
     }
 
-
     private IEnumerator HitFlashEffect()
     {
         float flashTime = 0.75f;
@@ -104,16 +100,16 @@ public class PlayerHealth : MonoBehaviour, IDamageable
                 string[] split = slotMeta.Split('_');
                 int teamNum = int.Parse(split[0]);
 
-                if (gameSpawnManager.IsTeamBaseAlive(teamNum))
+                if (GameSpawnManager.Instance != null && GameSpawnManager.Instance.IsTeamBaseAlive(teamNum))
                 {
-                    gameSpawnManager.ShowRespawnUI(true);
+                    GameSpawnManager.Instance.ShowRespawnUI(true);
                     gameObject.SetActive(false);
                     SendDeathState(false);
                     GameSpawnManager.Instance.StartCoroutine(RespawnCooldown());
                 }
                 else
                 {
-                    gameSpawnManager.StartSpectateMode();
+                    GameSpawnManager.Instance?.StartSpectateMode();
                     gameObject.SetActive(false);
                     SendDeathState(false);
                 }
@@ -126,33 +122,41 @@ public class PlayerHealth : MonoBehaviour, IDamageable
         }
     }
 
-
-
     IEnumerator RespawnCooldown()
     {
         float remainingTime = respawnTime;
         while (remainingTime > 0)
         {
-            gameSpawnManager.UpdateRespawnCounter(Mathf.CeilToInt(remainingTime));
+            GameSpawnManager.Instance?.UpdateRespawnCounter(Mathf.CeilToInt(remainingTime));
             yield return new WaitForSeconds(1f);
             remainingTime -= 1f;
         }
 
-        currentHealth = maxHealth;
-        gameSpawnManager.ShowRespawnUI(false);
+        // Check team base state again before respawning
+        string slotMeta = SteamMatchmaking.GetLobbyMemberData(
+            LobbyManager.Instance.currentLobby,
+            SteamUser.GetSteamID(),
+            "slot"
+        );
 
-        gameObject.SetActive(true);
-        gameSpawnManager.RespawnPlayer(gameObject);
-        SendDeathState(true);
-    }
-
-    private void OnTriggerEnter2D(Collider2D collision)
-    {
-        // layer bullet, team tag?
-        if (collision.gameObject.layer == 7)
+        if (!string.IsNullOrEmpty(slotMeta))
         {
-            TakeDamage(1);
-            collision.gameObject.SetActive(false);
+            string[] split = slotMeta.Split('_');
+            int teamNum = int.Parse(split[0]);
+
+            if (GameSpawnManager.Instance != null && GameSpawnManager.Instance.IsTeamBaseAlive(teamNum))
+            {
+                currentHealth = maxHealth;
+                GameSpawnManager.Instance.ShowRespawnUI(false);
+                gameObject.SetActive(true);
+                GameSpawnManager.Instance.RespawnPlayer(gameObject);
+                SendDeathState(true);
+            }
+            else
+            {
+                // Base was destroyed during respawn countdown
+                GameSpawnManager.Instance?.StartSpectateMode();
+            }
         }
     }
 

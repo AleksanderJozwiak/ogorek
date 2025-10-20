@@ -14,13 +14,10 @@ public class SteamNetworkingManager : MonoBehaviour
 
     private void Update()
     {
-        uint msgSize;
-        while (SteamNetworking.IsP2PPacketAvailable(out msgSize))
+        while (SteamNetworking.IsP2PPacketAvailable(out uint msgSize))
         {
             byte[] buffer = new byte[msgSize];
-            uint bytesRead;
-            CSteamID remoteId;
-            if (SteamNetworking.ReadP2PPacket(buffer, msgSize, out bytesRead, out remoteId))
+            if (SteamNetworking.ReadP2PPacket(buffer, msgSize, out uint bytesRead, out CSteamID remoteId))
             {
                 PacketType type = (PacketType)buffer[0];
                 byte[] data = new byte[buffer.Length - 1];
@@ -29,31 +26,35 @@ public class SteamNetworkingManager : MonoBehaviour
                 switch (type)
                 {
                     case PacketType.PlayerState:
+                    {
                         var state = NetworkHelpers.BytesToStruct<PlayerStateMessage>(data);
-                        RemotePlayerManager.Instance.UpdateRemotePlayer(state);
+                        RemotePlayerManager.Instance?.UpdateRemotePlayer(state);
                         break;
+                    }
 
                     case PacketType.Shoot:
+                    {
                         var shoot = NetworkHelpers.BytesToStruct<ShootMessage>(data);
-                        RemotePlayerManager.Instance.SpawnRemoteBullet(shoot);
+                        RemotePlayerManager.Instance?.SpawnRemoteBullet(shoot);
                         break;
+                    }
 
                     case PacketType.TeamBaseDestroyed:
                     {
                         TeamBaseMessage msg = NetworkHelpers.BytesToStruct<TeamBaseMessage>(data);
-                        GameSpawnManager.Instance.SetTeamBaseState(msg.teamNumber, msg.baseAlive);
+                        Debug.Log($"Received TeamBaseDestroyed: Team {msg.teamNumber}, Alive: {msg.baseAlive}");
+                        GameSpawnManager.Instance?.SetTeamBaseState(msg.teamNumber, msg.baseAlive);
                         break;
                     }
 
                     case PacketType.PlayerHit:
-                        {
-                            PlayerHitMessage hit = NetworkHelpers.BytesToStruct<PlayerHitMessage>(data);
-                            RemotePlayerManager.Instance.ShowHitEffect(hit);
-                            break;
-                        }
+                    {
+                        PlayerHitMessage hit = NetworkHelpers.BytesToStruct<PlayerHitMessage>(data);
+                        RemotePlayerManager.Instance?.ShowHitEffect(hit);
+                        break;
+                    }
                 }
             }
         }
     }
-
 }

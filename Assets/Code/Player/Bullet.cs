@@ -5,6 +5,7 @@ public class Bullet : MonoBehaviour
 {
     [SerializeField] private float bulletLifetime = 1f;
     [SerializeField] private PoolCategory category = PoolCategory.Bullets;
+    [SerializeField] private float damage = 1f;
 
     Rigidbody2D rb;
     Coroutine lifeRoutine;
@@ -29,6 +30,21 @@ public class Bullet : MonoBehaviour
     {
         yield return new WaitForSeconds(bulletLifetime);
         yield return PoolManager.Instance.ReleaseObject(category, gameObject);
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        var sameTeam = collision.CompareTag(tag);
+
+        if (sameTeam) return;
+
+        if (collision.TryGetComponent(out IDamageable target))
+        {
+            target.TakeDamage(damage);
+        }
+
+        if (!sameTeam)
+            gameObject.SetActive(false);
     }
 
     void OnCollisionEnter2D(Collision2D col)

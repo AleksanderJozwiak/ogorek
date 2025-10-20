@@ -23,6 +23,8 @@ public class PlanetHealth : MonoBehaviour, IDamageable
         }
 
         SendTeamBaseState(teamNumber, true);
+        // Immediately sync with GameSpawnManager
+        GameSpawnManager.Instance?.SetTeamBaseState(teamNumber, true);
     }
 
     public void TakeDamage(float damage)
@@ -57,13 +59,12 @@ public class PlanetHealth : MonoBehaviour, IDamageable
     private void DestroyTeam()
     {
         hittableMaterial.SetFloat("_HitColorAmount", 0);
-        Destroy(gameObject);
 
-        if (LobbyManager.Instance != null &&
-            SteamUser.GetSteamID().m_SteamID == SteamMatchmaking.GetLobbyOwner(LobbyManager.Instance.currentLobby).m_SteamID)
-        {
-            SendTeamBaseState(teamNumber, false);
-        }
+        GameSpawnManager.Instance?.SetTeamBaseState(teamNumber, false);
+
+        SendTeamBaseState(teamNumber, false);
+
+        Destroy(gameObject);
     }
 
     private void SendTeamBaseState(int teamNum, bool alive)
@@ -81,9 +82,7 @@ public class PlanetHealth : MonoBehaviour, IDamageable
 
         foreach (CSteamID member in LobbyManager.Instance.GetAllLobbyMembers())
         {
-            if (member != SteamUser.GetSteamID())
-                SteamNetworking.SendP2PPacket(member, packet, (uint)packet.Length, EP2PSend.k_EP2PSendReliable);
+            SteamNetworking.SendP2PPacket(member, packet, (uint)packet.Length, EP2PSend.k_EP2PSendReliable);
         }
     }
 }
-

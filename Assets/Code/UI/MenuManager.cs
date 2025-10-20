@@ -173,8 +173,23 @@ public class MenuManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Only to leave ongoing game
+    /// </summary>
     public void OpenMainMenu()
     {
+        PlayerStateMessage msg = new()
+        {
+            steamId = SteamUser.GetSteamID().m_SteamID,
+            posX = 0,
+            posY = 0,
+            rot = 0,
+            velX = 0,
+            velY = 0,
+            emmitingTrail = false,
+            isAlive = false,
+        };
+        SteamNetworkManager.SendPlayerState(msg);
         LobbyManager.Instance.LeaveLobby();
         UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
     }

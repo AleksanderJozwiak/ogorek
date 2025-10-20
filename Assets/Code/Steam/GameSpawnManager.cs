@@ -32,6 +32,11 @@ public class GameSpawnManager : MonoBehaviour
     private void Awake()
     {
         Instance = this;
+        // Initialize all teams as alive by default
+        for (int i = 1; i <= 9; i++)
+        {
+            teamBaseAlive[i] = true;
+        }
     }
 
     private void Start()
@@ -39,6 +44,7 @@ public class GameSpawnManager : MonoBehaviour
         _camera = Camera.main;
         SpawnLocalPlayer();
         ShowRespawnUI(false);
+        ShowSpectatorUI(false);
     }
 
     private void Update()
@@ -54,9 +60,12 @@ public class GameSpawnManager : MonoBehaviour
     {
         if (LobbyManager.Instance.currentLobby == CSteamID.Nil) return;
 
+        var identity = playerToRespawn.GetComponent<PlayerIdentity>();
+        CSteamID targetId = identity != null ? identity.SteamId : SteamUser.GetSteamID();
+
         string slotMeta = SteamMatchmaking.GetLobbyMemberData(
             LobbyManager.Instance.currentLobby,
-            SteamUser.GetSteamID(),
+            targetId,
             "slot"
         );
 
@@ -67,25 +76,52 @@ public class GameSpawnManager : MonoBehaviour
         int slotNum = int.Parse(split[1]);
         Transform spawnPoint = teams[teamNum - 1].slots[slotNum - 1];
 
+        if (!IsTeamBaseAlive(teamNum))
+        {
+            Debug.Log($"Team {teamNum}'s base is destroyed - no respawn allowed.");
+            if (targetId == SteamUser.GetSteamID())
+                StartSpectateMode();
+            return;
+        }
+
         playerToRespawn.transform.position = spawnPoint.position;
         playerToRespawn.transform.rotation = spawnPoint.rotation;
+
+        if (playerToRespawn.TryGetComponent<Rigidbody2D>(out var rb))
+        {
+            rb.angularVelocity = 0f;
+            rb.position = spawnPoint.position;
+            rb.rotation = spawnPoint.eulerAngles.z;
+        }
+
+        foreach (var trail in playerToRespawn.GetComponentsInChildren<TrailRenderer>())
+            trail.Clear();
     }
 
     public void ShowRespawnUI(bool visible)
     {
-        RespawnCounter.alpha = visible ? 1 : 0;
-        RespawnCounter.blocksRaycasts = visible;
-        Counter.text = visible ? "5" : "";
+        if (RespawnCounter != null)
+        {
+            RespawnCounter.alpha = visible ? 1 : 0;
+            RespawnCounter.blocksRaycasts = visible;
+            if (Counter != null)
+                Counter.text = visible ? "5" : "";
+        }
     }
 
     public void ShowSpectatorUI(bool visible)
     {
-        SpectatorCanvas.alpha = visible ? 1 : 0;
+        if (SpectatorCanvas != null)
+        {
+            SpectatorCanvas.alpha = visible ? 1 : 0;
+            SpectatorCanvas.blocksRaycasts = visible;
+        }
     }
 
     public void UpdateRespawnCounter(int seconds)
     {
-        Counter.text = seconds.ToString();
+        if (Counter != null)
+            Counter.text = seconds.ToString();
     }
 
     void SpawnLocalPlayer()
@@ -107,6 +143,7 @@ public class GameSpawnManager : MonoBehaviour
         Transform spawnPoint = teams[teamNum - 1].slots[slotNum - 1];
         GameObject playerPrefab = Resources.Load<GameObject>($"PlayerShip_{teamNum}");
         localPlayer = Instantiate(playerPrefab, spawnPoint.position, spawnPoint.rotation);
+        localPlayer.tag = $"Team_{teamNum}";
 
         var id = localPlayer.AddComponent<PlayerIdentity>();
         id.SteamId = SteamUser.GetSteamID();
@@ -124,6 +161,7 @@ public class GameSpawnManager : MonoBehaviour
     public void SetTeamBaseState(int team, bool alive)
     {
         teamBaseAlive[team] = alive;
+        Debug.Log($"Team {team} base state updated: {(alive ? "ALIVE" : "DESTROYED")}");
     }
 
     public bool IsTeamBaseAlive(int team)
@@ -135,13 +173,19 @@ public class GameSpawnManager : MonoBehaviour
     {
         ShowRespawnUI(false);
         isSpectating = true;
-        ShowSpectatorUI(isSpectating);
+        ShowSpectatorUI(true);
+
+        if (localPlayer != null)
+            localPlayer.SetActive(false);
+
         UpdateSpectateTargets();
         SwitchSpectateTarget();
     }
+
     private void UpdateSpectateTargets()
     {
         livePlayers.Clear();
+
         foreach (var identity in FindObjectsByType<PlayerIdentity>(FindObjectsSortMode.None))
         {
             if (identity.SteamId == SteamUser.GetSteamID())
@@ -161,13 +205,13 @@ public class GameSpawnManager : MonoBehaviour
         }
     }
 
-
-
     private void SwitchSpectateTarget()
     {
         if (livePlayers.Count == 0)
         {
             Debug.Log("No live players to spectate.");
+            if (nickname != null)
+                nickname.text = "No players to spectate";
             return;
         }
 
@@ -176,8 +220,8 @@ public class GameSpawnManager : MonoBehaviour
 
         _camera.GetComponent<CameraFollow>().target = nextTarget;
         CSteamID memberId = nextTarget.gameObject.GetComponent<PlayerIdentity>().SteamId;
-        nickname.text = SteamFriends.GetFriendPersonaName(memberId);
+        if (nickname != null)
+            nickname.text = SteamFriends.GetFriendPersonaName(memberId);
         Debug.Log($"Spectating: {nextTarget.name}");
     }
-
 }

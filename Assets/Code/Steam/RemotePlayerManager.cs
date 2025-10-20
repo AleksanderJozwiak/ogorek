@@ -37,6 +37,7 @@ public class RemotePlayerManager : MonoBehaviour
             remotePlayers[msg.steamId] = player;
             player.GetComponent<PlayerMovement>().enabled = false;
             var id = player.AddComponent<PlayerIdentity>();
+            player.tag = $"Team_{teamNum}";
             id.SteamId = new CSteamID(msg.steamId);
         }
 
@@ -103,6 +104,7 @@ public class RemotePlayerManager : MonoBehaviour
         if (!remotePlayers.TryGetValue(msg.steamId, out GameObject player)) return;
 
         GameObject go = PoolManager.Instance.PoolMap[PoolCategory.Bullets].Get();
+        go.tag = player.tag;
         go.transform.SetPositionAndRotation(new Vector2(msg.posX, msg.posY), Quaternion.identity);
 
         var rb = go.GetComponent<Rigidbody2D>();
