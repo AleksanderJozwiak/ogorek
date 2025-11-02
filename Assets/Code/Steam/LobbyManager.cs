@@ -236,4 +236,7 @@ public class LobbyManager : MonoBehaviour
         if (teamManager != null)
             teamManager.RefreshTeamUI();
     }
+
+    public bool IsHost => SteamMatchmaking.GetLobbyOwner(currentLobby) == SteamUser.GetSteamID();
+
 }

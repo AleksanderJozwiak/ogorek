@@ -53,6 +53,16 @@ public class SteamNetworkingManager : MonoBehaviour
                         RemotePlayerManager.Instance?.ShowHitEffect(hit);
                         break;
                     }
+
+                    case PacketType.AsteroidSpawn:
+                        {
+                            AsteroidSpawnMessage msg = NetworkHelpers.BytesToStruct<AsteroidSpawnMessage>(data);
+                            GameObject asteroid = PoolManager.Instance.PoolMap[PoolCategory.Asteroids].Get();
+                            asteroid.transform.position = new Vector3(msg.posX, msg.posY, 0f);
+                            asteroid.GetComponent<Asteroid>().SetDirection(new Vector3(msg.dirX, msg.dirY, 0f));
+                            asteroid.SetActive(true);
+                            break;
+                        }
                 }
             }
         }

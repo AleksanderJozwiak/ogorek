@@ -7,6 +7,7 @@ public enum PacketType : byte
     Shoot = 2,
     TeamBaseDestroyed = 3,
     PlayerHit = 4,
+    AsteroidSpawn = 5,
 }
 
 [System.Serializable]
@@ -41,6 +42,15 @@ public struct PlayerHitMessage
 {
     public ulong steamId;
     public float damage;
+}
+
+[System.Serializable]
+public struct AsteroidSpawnMessage
+{
+    public float posX;
+    public float posY;
+    public float dirX;
+    public float dirY;
 }
 
 public class NetworkHelpers

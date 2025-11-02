@@ -8,6 +8,8 @@ public class Asteroid : MonoBehaviour
 
     public float speed = 5f;
     private Vector3 direction;
+    public Vector3 Direction => direction;
+    public void SetDirection(Vector3 dir) => direction = dir.normalized;
 
     private void OnEnable()
     {
