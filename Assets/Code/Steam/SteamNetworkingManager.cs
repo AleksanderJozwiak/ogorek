@@ -63,6 +63,13 @@ public class SteamNetworkingManager : MonoBehaviour
                             asteroid.SetActive(true);
                             break;
                         }
+
+                    case PacketType.PlanetSpawn:
+                        {
+                            PlanetSpawnMessage msg = NetworkHelpers.BytesToStruct<PlanetSpawnMessage>(data);
+                            FindFirstObjectByType<PlanetSpawner>()?.SpawnPlanet(msg.team, msg.spawnIndex);
+                            break;
+                        }
                 }
             }
         }

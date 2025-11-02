@@ -1292,7 +1292,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0.000061035156, y: 0}
+  m_AnchoredPosition: {x: 0.00012207031, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &695698656
@@ -3988,6 +3988,46 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 2281460746139860197, guid: daefded321110fd479ced8afd9971857, type: 3}
+      propertyPath: spawnPoints.Array.size
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 2281460746139860197, guid: daefded321110fd479ced8afd9971857, type: 3}
+      propertyPath: 'spawnPoints.Array.data[0]'
+      value: 
+      objectReference: {fileID: 1190832903}
+    - target: {fileID: 2281460746139860197, guid: daefded321110fd479ced8afd9971857, type: 3}
+      propertyPath: 'spawnPoints.Array.data[1]'
+      value: 
+      objectReference: {fileID: 913637008}
+    - target: {fileID: 2281460746139860197, guid: daefded321110fd479ced8afd9971857, type: 3}
+      propertyPath: 'spawnPoints.Array.data[2]'
+      value: 
+      objectReference: {fileID: 970205673}
+    - target: {fileID: 2281460746139860197, guid: daefded321110fd479ced8afd9971857, type: 3}
+      propertyPath: 'spawnPoints.Array.data[3]'
+      value: 
+      objectReference: {fileID: 225826430}
+    - target: {fileID: 2281460746139860197, guid: daefded321110fd479ced8afd9971857, type: 3}
+      propertyPath: 'spawnPoints.Array.data[4]'
+      value: 
+      objectReference: {fileID: 471458073}
+    - target: {fileID: 2281460746139860197, guid: daefded321110fd479ced8afd9971857, type: 3}
+      propertyPath: 'spawnPoints.Array.data[5]'
+      value: 
+      objectReference: {fileID: 974480760}
+    - target: {fileID: 2281460746139860197, guid: daefded321110fd479ced8afd9971857, type: 3}
+      propertyPath: 'spawnPoints.Array.data[6]'
+      value: 
+      objectReference: {fileID: 1072215963}
+    - target: {fileID: 2281460746139860197, guid: daefded321110fd479ced8afd9971857, type: 3}
+      propertyPath: 'spawnPoints.Array.data[7]'
+      value: 
+      objectReference: {fileID: 221693779}
+    - target: {fileID: 2281460746139860197, guid: daefded321110fd479ced8afd9971857, type: 3}
+      propertyPath: 'spawnPoints.Array.data[8]'
+      value: 
+      objectReference: {fileID: 1408237560}
     - target: {fileID: 2281460746139860197, guid: daefded321110fd479ced8afd9971857, type: 3}
       propertyPath: 'teamParents.Array.data[0]'
       value: 
