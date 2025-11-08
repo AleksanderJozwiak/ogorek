@@ -6,36 +6,25 @@ public class PlanetSpawner : MonoBehaviour
 {
     public List<Transform> teamParents;
     public GameObject[] teamBasePrefabs;
-    [SerializeField] private Transform[] spawnPoints;
 
-    private bool planetsSpawned = false;
+    [SerializeField] private Transform[] spawnPoints;
 
     void Start()
     {
-        if (!LobbyManager.Instance.IsHost)
-        {
-            Debug.Log("[PlanetSpawner] Not host — skipping planet spawn.");
-            return;
-        }
-
-        if (planetsSpawned)
-        {
-            Debug.Log("[PlanetSpawner] Planets already spawned — skipping.");
-            return;
-        }
-
-        planetsSpawned = true;
-        Debug.Log("[PlanetSpawner] Host is spawning planets...");
         SpawnActiveTeamBases();
     }
 
     void SpawnActiveTeamBases()
     {
+
+        if (!LobbyManager.Instance.IsHost) return;
+
         HashSet<int> activeTeams = new();
         List<int> availableSpots = new(spawnPoints.Length);
         for (int i = 0; i < spawnPoints.Length; i++) availableSpots.Add(i);
 
         int memberCount = SteamMatchmaking.GetNumLobbyMembers(LobbyManager.Instance.currentLobby);
+
 
         for (int i = 0; i < memberCount; i++)
         {
@@ -50,6 +39,7 @@ public class PlanetSpawner : MonoBehaviour
             }
         }
 
+
         foreach (int team in activeTeams)
         {
             if (availableSpots.Count == 0) break;
@@ -58,14 +48,13 @@ public class PlanetSpawner : MonoBehaviour
             int chosenSpawn = availableSpots[randomIndex];
             availableSpots.RemoveAt(randomIndex);
 
-            Debug.Log($"[PlanetSpawner] Spawning planet for Team {team} at spawn index {chosenSpawn}");
-
             SpawnPlanet(team, chosenSpawn);
+
 
             SteamNetworkManager.SendPlanetSpawn(new PlanetSpawnMessage
             {
                 team = team,
-                spawnIndex = chosenSpawn
+                spawnIndex = chosenSpawn 
             });
         }
     }
@@ -73,10 +62,7 @@ public class PlanetSpawner : MonoBehaviour
     public void SpawnPlanet(int team, int spawnIndex)
     {
         if (spawnIndex < 0 || spawnIndex >= teamParents.Count || team <= 0 || team > teamBasePrefabs.Length)
-        {
-            Debug.LogWarning($"[PlanetSpawner] Invalid spawnIndex ({spawnIndex}) or team ({team})");
             return;
-        }
 
         Transform parent = teamParents[spawnIndex];
         GameObject prefab = teamBasePrefabs[team - 1];
