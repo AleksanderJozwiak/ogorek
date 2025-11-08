@@ -24,8 +24,5 @@ public static class SteamNetworkManager
 
     public static void SendPlayerState(PlayerStateMessage msg) => SendMessage(msg, PacketType.PlayerState);
     public static void SendShoot(ShootMessage msg) => SendMessage(msg, PacketType.Shoot);
-    public static void SendPlanetSpawn(PlanetSpawnMessage msg) => SendMessage(msg, PacketType.PlanetSpawn);
-    public static void SendAsteroidSpawn(AsteroidSpawnMessage msg) => SendMessage(msg, PacketType.AsteroidSpawn);
-
 
 }

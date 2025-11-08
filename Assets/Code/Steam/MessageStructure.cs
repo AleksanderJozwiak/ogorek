@@ -8,7 +8,6 @@ public enum PacketType : byte
     TeamBaseDestroyed = 3,
     PlayerHit = 4,
     AsteroidSpawn = 5,
-    PlanetSpawn = 6,
 }
 
 [System.Serializable]
@@ -52,12 +51,6 @@ public struct AsteroidSpawnMessage
     public float posY;
     public float dirX;
     public float dirY;
-}
-
-public struct PlanetSpawnMessage
-{
-    public int team;
-    public int spawnIndex;
 }
 
 public class NetworkHelpers

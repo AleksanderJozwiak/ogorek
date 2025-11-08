@@ -4,10 +4,8 @@ using System.Collections.Generic;
 
 public class PlanetSpawner : MonoBehaviour
 {
-    public List<Transform> teamParents;
+    public List<Transform> teamParents; 
     public GameObject[] teamBasePrefabs;
-
-    [SerializeField] private Transform[] spawnPoints;
 
     void Start()
     {
@@ -16,15 +14,9 @@ public class PlanetSpawner : MonoBehaviour
 
     void SpawnActiveTeamBases()
     {
-
-        if (!LobbyManager.Instance.IsHost) return;
-
         HashSet<int> activeTeams = new();
-        List<int> availableSpots = new(spawnPoints.Length);
-        for (int i = 0; i < spawnPoints.Length; i++) availableSpots.Add(i);
 
         int memberCount = SteamMatchmaking.GetNumLobbyMembers(LobbyManager.Instance.currentLobby);
-
 
         for (int i = 0; i < memberCount; i++)
         {
@@ -35,43 +27,28 @@ public class PlanetSpawner : MonoBehaviour
             {
                 string[] parts = slot.Split('_');
                 if (parts.Length >= 1 && int.TryParse(parts[0], out int team))
+                {
                     activeTeams.Add(team);
+                }
             }
         }
 
-
         foreach (int team in activeTeams)
         {
-            if (availableSpots.Count == 0) break;
+            int teamIndex = team - 1;
 
-            int randomIndex = Random.Range(0, availableSpots.Count);
-            int chosenSpawn = availableSpots[randomIndex];
-            availableSpots.RemoveAt(randomIndex);
-
-            SpawnPlanet(team, chosenSpawn);
-
-
-            SteamNetworkManager.SendPlanetSpawn(new PlanetSpawnMessage
+            if (teamIndex >= 0 && teamIndex < teamParents.Count)
             {
-                team = team,
-                spawnIndex = chosenSpawn 
-            });
-        }
-    }
+                Transform parent = teamParents[teamIndex];
+                GameObject prefab = teamBasePrefabs[teamIndex];
 
-    public void SpawnPlanet(int team, int spawnIndex)
-    {
-        if (spawnIndex < 0 || spawnIndex >= teamParents.Count || team <= 0 || team > teamBasePrefabs.Length)
-            return;
-
-        Transform parent = teamParents[spawnIndex];
-        GameObject prefab = teamBasePrefabs[team - 1];
-
-        if (parent != null && prefab != null)
-        {
-            GameObject planet = Instantiate(prefab, parent.position, Quaternion.identity);
-            planet.tag = $"Team_{team}";
-            GameSpawnManager.Instance?.SetTeamBaseState(team, true);
+                if (parent != null && prefab != null)
+                {
+                    GameObject gameObject = Instantiate(prefab, parent.position, Quaternion.identity);
+                    gameObject.tag = $"Team_{team}";
+                    GameSpawnManager.Instance.SetTeamBaseState(team, true);
+                }
+            }
         }
     }
 }
