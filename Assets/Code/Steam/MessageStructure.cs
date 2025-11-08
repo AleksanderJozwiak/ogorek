@@ -8,6 +8,13 @@ public enum PacketType : byte
     TeamBaseDestroyed = 3,
     PlayerHit = 4,
     AsteroidSpawn = 5,
+    GameEnd = 6,
+}
+
+[System.Serializable]
+public struct GameEndMessage
+{
+    public int winningTeam;
 }
 
 [System.Serializable]

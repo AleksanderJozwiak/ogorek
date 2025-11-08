@@ -12,14 +12,22 @@ public class PlayerHealth : MonoBehaviour, IDamageable
     private SpriteRenderer spriteRenderer;
     private Coroutine hitEffectCoroutine;
     private bool isLocalPlayer;
-    public bool IsAlive() => currentHealth > 0;
+
+    private int teamNumber = -1;
+    private bool _isAlive = true;
+
+    private CSteamID lastAttacker;
+    private PlayerIdentity identity;
+
+    public bool IsAlive() => _isAlive;
 
     private void Start()
     {
         currentHealth = maxHealth;
+        _isAlive = true;
 
-        if (TryGetComponent<PlayerIdentity>(out var playerId))
-            isLocalPlayer = playerId.SteamId == SteamUser.GetSteamID();
+        if (TryGetComponent(out identity))
+            isLocalPlayer = identity.SteamId == SteamUser.GetSteamID();
 
         if (TryGetComponent(out spriteRenderer))
         {
@@ -28,11 +36,27 @@ public class PlayerHealth : MonoBehaviour, IDamageable
         }
     }
 
-    public void TakeDamage(float damage)
+    public void SetTeam(int team)
     {
-        if (!IsAlive()) return;
+        teamNumber = team;
+    }
+
+    public void TakeDamage(float damage, CSteamID attackerId)
+    {
+        if (!_isAlive) return;
 
         currentHealth -= damage;
+
+        if (attackerId.IsValid() && identity != null)
+        {
+            lastAttacker = attackerId;
+
+            if (attackerId != identity.SteamId)
+            {
+                StatsManager.Instance?.RecordPlayerDamage(attackerId, identity.SteamId, damage, maxHealth);
+            }
+        }
+
         SendPlayerHit(damage);
         currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
 
@@ -43,7 +67,7 @@ public class PlayerHealth : MonoBehaviour, IDamageable
             hitEffectCoroutine = StartCoroutine(HitFlashEffect());
         }
 
-        if (currentHealth <= 0)
+        if (currentHealth <= 0 && _isAlive)
             Die();
     }
 
@@ -84,41 +108,52 @@ public class PlayerHealth : MonoBehaviour, IDamageable
 
     private void Die()
     {
+        if (!_isAlive) return;
+
+        _isAlive = false;
         currentHealth = 0;
+
+        if (identity != null)
+        {
+            // Zg³oœ w³asn¹ œmieræ
+            StatsManager.Instance?.RecordDeath(identity.SteamId);
+
+            // Zg³oœ, ¿e `lastAttacker` zdoby³ zabójstwo
+            // (Jeœli lastAttacker jest nieprawid³owy, np. samobójstwo, nic siê nie stanie)
+            if (lastAttacker.IsValid())
+            {
+                StatsManager.Instance?.RecordKill(lastAttacker, identity.SteamId, maxHealth);
+            }
+        }
+
+        lastAttacker = CSteamID.Nil;
+
         hittableMaterial.SetFloat("_HitColorAmount", 0);
 
         if (isLocalPlayer)
         {
-            string slotMeta = SteamMatchmaking.GetLobbyMemberData(
-                LobbyManager.Instance.currentLobby,
-                SteamUser.GetSteamID(),
-                "slot"
-            );
-
-            if (!string.IsNullOrEmpty(slotMeta))
+            if (teamNumber == -1)
             {
-                string[] split = slotMeta.Split('_');
-                int teamNum = int.Parse(split[0]);
-
-                if (GameSpawnManager.Instance != null && GameSpawnManager.Instance.IsTeamBaseAlive(teamNum))
-                {
-                    GameSpawnManager.Instance.ShowRespawnUI(true);
-                    gameObject.SetActive(false);
-                    SendDeathState(false);
-                    GameSpawnManager.Instance.StartCoroutine(RespawnCooldown());
-                }
-                else
-                {
-                    GameSpawnManager.Instance?.StartSpectateMode();
-                    gameObject.SetActive(false);
-                    SendDeathState(false);
-                }
+                Debug.LogError("PlayerHealth: teamNumber nie zosta³ ustawiony! Gracz nie mo¿e siê odrodziæ.");
+                GameSpawnManager.Instance?.StartSpectateMode();
+                SendPlayerState(false);
+                gameObject.SetActive(false);
+                return;
             }
-        }
-        else
-        {
-            gameObject.SetActive(false);
-            SendDeathState(false);
+
+            if (GameSpawnManager.Instance != null && GameSpawnManager.Instance.IsTeamBaseAlive(teamNumber))
+            {
+                GameSpawnManager.Instance.ShowRespawnUI(true);
+                SendPlayerState(false);
+                gameObject.SetActive(false);
+                GameSpawnManager.Instance.StartCoroutine(RespawnCooldown());
+            }
+            else
+            {
+                GameSpawnManager.Instance?.StartSpectateMode();
+                SendPlayerState(false);
+                gameObject.SetActive(false);
+            }
         }
     }
 
@@ -132,44 +167,50 @@ public class PlayerHealth : MonoBehaviour, IDamageable
             remainingTime -= 1f;
         }
 
-        // Check team base state again before respawning
-        string slotMeta = SteamMatchmaking.GetLobbyMemberData(
-            LobbyManager.Instance.currentLobby,
-            SteamUser.GetSteamID(),
-            "slot"
-        );
-
-        if (!string.IsNullOrEmpty(slotMeta))
+        if (teamNumber == -1)
         {
-            string[] split = slotMeta.Split('_');
-            int teamNum = int.Parse(split[0]);
+            Debug.LogError("PlayerHealth: teamNumber nie ustawiony podczas próby odrodzenia!");
+            GameSpawnManager.Instance?.StartSpectateMode();
+            yield break;
+        }
 
-            if (GameSpawnManager.Instance != null && GameSpawnManager.Instance.IsTeamBaseAlive(teamNum))
-            {
-                currentHealth = maxHealth;
-                GameSpawnManager.Instance.ShowRespawnUI(false);
-                gameObject.SetActive(true);
-                GameSpawnManager.Instance.RespawnPlayer(gameObject);
-                SendDeathState(true);
-            }
-            else
-            {
-                // Base was destroyed during respawn countdown
-                GameSpawnManager.Instance?.StartSpectateMode();
-            }
+        if (GameSpawnManager.Instance != null && GameSpawnManager.Instance.IsTeamBaseAlive(teamNumber))
+        {
+            // Baza wci¹¿ ¿yje: odrodzenie
+            currentHealth = maxHealth;
+            _isAlive = true;
+            GameSpawnManager.Instance.ShowRespawnUI(false);
+            gameObject.SetActive(true);
+            GameSpawnManager.Instance.RespawnPlayer(gameObject);
+            SendPlayerState(true);
+        }
+        else
+        {
+            GameSpawnManager.Instance?.StartSpectateMode();
         }
     }
 
-    private void SendDeathState(bool alive)
+    private void SendPlayerState(bool alive)
     {
-        PlayerStateMessage msg = new PlayerStateMessage
+        if (!isLocalPlayer) return;
+
+        float velX = 0f;
+        float velY = 0f;
+
+        if (alive && TryGetComponent<Rigidbody2D>(out var rb))
+        {
+            velX = rb.linearVelocity.x;
+            velY = rb.linearVelocity.y;
+        }
+
+        PlayerStateMessage msg = new()
         {
             steamId = SteamUser.GetSteamID().m_SteamID,
             posX = transform.position.x,
             posY = transform.position.y,
             rot = transform.rotation.eulerAngles.z,
-            velX = 0,
-            velY = 0,
+            velX = velX,
+            velY = velY,
             emmitingTrail = false,
             isAlive = alive
         };
@@ -179,10 +220,9 @@ public class PlayerHealth : MonoBehaviour, IDamageable
         packet[0] = (byte)PacketType.PlayerState;
         System.Buffer.BlockCopy(data, 0, packet, 1, data.Length);
 
-        foreach (CSteamID member in LobbyManager.Instance.GetAllLobbyMembers())
+        if (SteamNetworkingManager.Instance != null)
         {
-            if (member != SteamUser.GetSteamID())
-                SteamNetworking.SendP2PPacket(member, packet, (uint)packet.Length, EP2PSend.k_EP2PSendReliable);
+            SteamNetworkingManager.Instance.BroadcastPacket(packet, EP2PSend.k_EP2PSendReliable);
         }
     }
 }

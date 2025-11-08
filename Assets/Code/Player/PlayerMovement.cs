@@ -109,6 +109,10 @@ public class PlayerMovement : MonoBehaviour
         GameObject go = PoolManager.Instance.PoolMap[PoolCategory.Bullets].Get();
 
         go.tag = gameObject.tag;
+        if (go.TryGetComponent<Bullet>(out var bullet))
+        {
+            bullet.OwnerSteamId = SteamUser.GetSteamID();
+        }
 
         go.transform.SetPositionAndRotation(bulletSpawn.position, Quaternion.identity);
         var rb = go.GetComponent<Rigidbody2D>();

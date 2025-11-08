@@ -12,6 +12,8 @@ public class PlanetHealth : MonoBehaviour, IDamageable
     private SpriteRenderer spriteRenderer;
     private Coroutine hitEffectCoroutine;
 
+    private CSteamID lastAttacker;
+
     private void Start()
     {
         currentHealth = maxHealth;
@@ -23,15 +25,25 @@ public class PlanetHealth : MonoBehaviour, IDamageable
         }
 
         SendTeamBaseState(teamNumber, true);
-        // Immediately sync with GameSpawnManager
-        GameSpawnManager.Instance?.SetTeamBaseState(teamNumber, true);
+
+        if (GameSpawnManager.Instance != null)
+        {
+            GameSpawnManager.Instance.SetTeamBaseState(teamNumber, true);
+            GameSpawnManager.Instance.RegisterTeamBase(teamNumber, this);
+        }
     }
 
-    public void TakeDamage(float damage)
+    public void TakeDamage(float damage, CSteamID attackerId)
     {
         currentHealth -= damage;
         transform.localScale -= new Vector3(damage * 0.01f, damage * 0.01f, 0);
         currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
+
+        if (attackerId.IsValid())
+        {
+            lastAttacker = attackerId;
+            StatsManager.Instance?.RecordPlanetDamage(attackerId, damage);
+        }
 
         if (spriteRenderer != null && hittableMaterial != null)
         {
@@ -62,8 +74,13 @@ public class PlanetHealth : MonoBehaviour, IDamageable
 
         GameSpawnManager.Instance?.SetTeamBaseState(teamNumber, false);
 
-        SendTeamBaseState(teamNumber, false);
+        if (lastAttacker.IsValid())
+        {
+            StatsManager.Instance?.RecordPlanetKill(lastAttacker);
+        }
 
+        SendTeamBaseState(teamNumber, false);
+        GameSpawnManager.Instance?.UnregisterTeamBase(teamNumber);
         Destroy(gameObject);
     }
 

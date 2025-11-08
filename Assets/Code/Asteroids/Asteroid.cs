@@ -1,3 +1,4 @@
+using Steamworks;
 using UnityEngine;
 
 public class Asteroid : MonoBehaviour
@@ -27,7 +28,7 @@ public class Asteroid : MonoBehaviour
     {
         if (collision.TryGetComponent(out IDamageable target))
         {
-            target.TakeDamage(damage);
+            target.TakeDamage(damage, CSteamID.Nil);
             StartCoroutine(PoolManager.Instance.ReleaseObject(PoolCategory.Asteroids, gameObject));
         }
     }

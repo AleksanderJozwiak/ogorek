@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Steamworks;
+using UnityEngine.SceneManagement;
 
 public class LobbyManager : MonoBehaviour
 {
@@ -18,6 +19,8 @@ public class LobbyManager : MonoBehaviour
 
     private List<CSteamID> foundLobbies = new List<CSteamID>();
     public CSteamID currentLobby = CSteamID.Nil;
+    public CSteamID currentHostId;
+    public bool isHost = false;
 
     public event Action<List<CSteamID>> OnLobbyListUpdated;
 
@@ -124,7 +127,7 @@ public class LobbyManager : MonoBehaviour
         {
             Debug.Log("Game is starting!");
             SteamMatchmaking.SetLobbyJoinable(currentLobby, false);
-            UnityEngine.SceneManagement.SceneManager.LoadScene("GameScene");
+            LoadScene("GameScene");
             return;
         }
 
@@ -135,38 +138,14 @@ public class LobbyManager : MonoBehaviour
     {
         if (callback.m_ulSteamIDLobby != currentLobby.m_SteamID) return;
 
-        bool someoneLeft = (callback.m_rgfChatMemberStateChange & (uint)EChatMemberStateChange.k_EChatMemberStateChangeDisconnected) != 0 ||
-                           (callback.m_rgfChatMemberStateChange & (uint)EChatMemberStateChange.k_EChatMemberStateChangeLeft) != 0;
+        bool stateChanged = (callback.m_rgfChatMemberStateChange & (uint)EChatMemberStateChange.k_EChatMemberStateChangeDisconnected) != 0 ||
+                           (callback.m_rgfChatMemberStateChange & (uint)EChatMemberStateChange.k_EChatMemberStateChangeLeft) != 0 ||
+                           (callback.m_rgfChatMemberStateChange & (uint)EChatMemberStateChange.k_EChatMemberStateChangeEntered) != 0;
 
-        if (someoneLeft)
+        if (stateChanged)
         {
-            // Check if host is still present
-            string hostName = SteamMatchmaking.GetLobbyData(currentLobby, "host_name");
-            bool hostPresent = false;
-            int memberCount = SteamMatchmaking.GetNumLobbyMembers(currentLobby);
-            for (int i = 0; i < memberCount; i++)
-            {
-                CSteamID memberId = SteamMatchmaking.GetLobbyMemberByIndex(currentLobby, i);
-                if (SteamFriends.GetFriendPersonaName(memberId) == hostName)
-                {
-                    hostPresent = true;
-                    break;
-                }
-            }
-
-            if (!hostPresent)
-            {
-                Debug.Log("Host has left the lobby. Leaving lobby...");
-                LeaveLobby();
-
-                MenuManager menuManager = FindFirstObjectByType<MenuManager>();
-                if (menuManager != null)
-                    menuManager.ShowLobbyBrowserAfterHostLeft();
-            }
-            else
-            {
-                RefreshTeamUI();
-            }
+            Debug.Log("Członek lobby zmienił stan (wszedł/wyszedł). Odświeżam UI.");
+            RefreshTeamUI();
         }
     }
     #endregion
@@ -237,6 +216,11 @@ public class LobbyManager : MonoBehaviour
             teamManager.RefreshTeamUI();
     }
 
-    public bool IsHost => SteamMatchmaking.GetLobbyOwner(currentLobby) == SteamUser.GetSteamID();
+    public bool IsHost => currentLobby != CSteamID.Nil && SteamMatchmaking.GetLobbyOwner(currentLobby) == SteamUser.GetSteamID();
 
+    public void LoadScene(string sceneName)
+    {
+        // Tutaj można dodać logikę czyszczenia przed zmianą sceny, jeśli jest potrzebna
+        SceneManager.LoadScene(sceneName);
+    }
 }

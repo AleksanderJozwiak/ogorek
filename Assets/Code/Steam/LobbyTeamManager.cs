@@ -182,7 +182,7 @@ public class LobbyTeamManager : MonoBehaviour
 
         // Check if I'm host
         string hostName = SteamMatchmaking.GetLobbyData(LobbyManager.Instance.currentLobby, "host_name");
-        bool isHost = SteamFriends.GetPersonaName() == hostName;
+        bool isHost = LobbyManager.Instance.IsHost;
 
         if (isHost)
         {
@@ -244,7 +244,7 @@ public class LobbyTeamManager : MonoBehaviour
         SteamMatchmaking.SetLobbyData(LobbyManager.Instance.currentLobby, "game_start", "1");
 
         // You could also load your scene directly here for host
-        UnityEngine.SceneManagement.SceneManager.LoadScene("GameScene");
+        LobbyManager.Instance.LoadScene("GameScene");
     }
 
 }

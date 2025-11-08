@@ -1,3 +1,4 @@
+using Steamworks;
 using System.Collections;
 using UnityEngine;
 
@@ -6,6 +7,8 @@ public class Bullet : MonoBehaviour
     [SerializeField] private float bulletLifetime = 1f;
     [SerializeField] private PoolCategory category = PoolCategory.Bullets;
     [SerializeField] private float damage = 1f;
+
+    public CSteamID OwnerSteamId;
 
     Rigidbody2D rb;
     Coroutine lifeRoutine;
@@ -40,7 +43,7 @@ public class Bullet : MonoBehaviour
 
         if (collision.TryGetComponent(out IDamageable target))
         {
-            target.TakeDamage(damage);
+            target.TakeDamage(damage, OwnerSteamId);
         }
 
         if (!sameTeam)

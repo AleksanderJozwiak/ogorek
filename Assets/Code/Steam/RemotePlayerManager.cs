@@ -25,6 +25,10 @@ public class RemotePlayerManager : MonoBehaviour
             if (string.IsNullOrEmpty(slotMeta)) return;
             string[] split = slotMeta.Split('_');
             int teamNum = int.Parse(split[0]);
+
+            CSteamID remoteSteamId = new(msg.steamId);
+            StatsManager.Instance?.InitializePlayer(remoteSteamId, teamNum);
+
             GameObject playerPrefab = Resources.Load<GameObject>($"PlayerShip_{teamNum}");
             player = Instantiate(playerPrefab, new Vector2(msg.posX, msg.posY), Quaternion.Euler(0, 0, msg.rot));
             var trailsRenderer = player.GetComponentsInChildren<TrailRenderer>();
@@ -38,7 +42,7 @@ public class RemotePlayerManager : MonoBehaviour
             player.GetComponent<PlayerMovement>().enabled = false;
             var id = player.AddComponent<PlayerIdentity>();
             player.tag = $"Team_{teamNum}";
-            id.SteamId = new CSteamID(msg.steamId);
+            id.SteamId = remoteSteamId;
         }
 
         player.SetActive(msg.isAlive);
@@ -105,6 +109,12 @@ public class RemotePlayerManager : MonoBehaviour
 
         GameObject go = PoolManager.Instance.PoolMap[PoolCategory.Bullets].Get();
         go.tag = player.tag;
+
+        if (go.TryGetComponent<Bullet>(out var bullet))
+        {
+            bullet.OwnerSteamId = new CSteamID(msg.steamId);
+        }
+
         go.transform.SetPositionAndRotation(new Vector2(msg.posX, msg.posY), Quaternion.identity);
 
         var rb = go.GetComponent<Rigidbody2D>();
