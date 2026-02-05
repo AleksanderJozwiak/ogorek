@@ -371,23 +371,33 @@ public class GameSpawnManager : MonoBehaviour
 
     private void SendGameEndMessage(int winningTeam)
     {
+        // 1. Obliczamy placementy u Hosta
         StatsManager.Instance?.FinalizeStats(winningTeam, teamPlacements);
 
-        GameEndMessage msg = new()
-        {
-            winningTeam = winningTeam
-        };
+        // 2. Przygotowujemy dane do wys³ania (JSON)
+        var allStats = StatsManager.Instance.GetAllStats();
+        string statsJson = JsonUtility.ToJson(new PlayerStatsListWrapper { stats = allStats });
 
-        byte[] data = NetworkHelpers.StructToBytes(msg);
-        byte[] packet = new byte[data.Length + 1];
+        // Format: "winningTeam|json_string"
+        string payload = winningTeam + "|" + statsJson;
+        byte[] payloadBytes = System.Text.Encoding.UTF8.GetBytes(payload);
+
+        // 3. Budujemy pakiet: [PacketType][Payload]
+        byte[] packet = new byte[payloadBytes.Length + 1];
         packet[0] = (byte)PacketType.GameEnd;
-        System.Buffer.BlockCopy(data, 0, packet, 1, data.Length);
+        System.Buffer.BlockCopy(payloadBytes, 0, packet, 1, payloadBytes.Length);
 
-        // Wyœlij do wszystkich (w tym do siebie, aby te¿ zmieniæ scenê)
+        // 4. Rozsy³amy
         SteamNetworkingManager.Instance.BroadcastPacket(packet, EP2PSend.k_EP2PSendReliable);
 
-        // Host równie¿ ³aduje scenê
+        // Host zmienia scenê
         LobbyManager.Instance.LoadScene("Statistics");
+    }
+
+    [System.Serializable]
+    public class PlayerStatsListWrapper
+    {
+        public List<PlayerStats> stats;
     }
 
     public bool IsTeamBaseAlive(int team)

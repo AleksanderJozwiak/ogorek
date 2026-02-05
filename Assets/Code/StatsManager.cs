@@ -195,4 +195,20 @@ public class StatsManager : MonoBehaviour
     {
         return allPlayerStats.Values.ToList();
     }
+
+    public void LoadStatsFromHost(int winningTeam, List<PlayerStats> receivedStats)
+    {
+        this.WinningTeam = winningTeam;
+
+        // Czyœcimy lokalne (puste lub niepe³ne) statystyki
+        allPlayerStats.Clear();
+
+        // Przepisujemy dane od Hosta do naszego s³ownika
+        foreach (var ps in receivedStats)
+        {
+            allPlayerStats[ps.SteamId] = ps;
+        }
+
+        Debug.Log($"StatsManager: Za³adowano statystyki dla {allPlayerStats.Count} graczy od Hosta.");
+    }
 }

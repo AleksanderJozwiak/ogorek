@@ -20,6 +20,9 @@ public class StatisticsUI : MonoBehaviour
 
     void Start()
     {
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
         // 1. Sprawdü, czy StatsManager istnieje
         if (StatsManager.Instance == null)
         {
@@ -80,6 +83,7 @@ public class StatisticsUI : MonoBehaviour
 
     private string GetOrdinal(int num)
     {
+        if (num == 0) num = 1;
         if (num <= 0) return num.ToString(); 
 
         switch (num % 100)
