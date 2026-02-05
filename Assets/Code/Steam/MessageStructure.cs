@@ -58,6 +58,7 @@ public struct AsteroidSpawnMessage
     public float posY;
     public float dirX;
     public float dirY;
+    public float rotZ;
 }
 
 public class NetworkHelpers

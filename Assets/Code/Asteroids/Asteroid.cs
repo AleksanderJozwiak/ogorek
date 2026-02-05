@@ -7,7 +7,8 @@ public class Asteroid : MonoBehaviour
     [SerializeField] private float damage = 1f;
 
 
-    public float speed = 5f;
+    public float maxSpeed = 10f;
+    private float speed = 3f;
     private Vector3 direction;
     public Vector3 Direction => direction;
     public void SetDirection(Vector3 dir) => direction = dir.normalized;
@@ -15,7 +16,13 @@ public class Asteroid : MonoBehaviour
     private void OnEnable()
     {
         transform.position = GetRandomSpawnPosition();
-        direction = (Vector3.zero - transform.position).normalized;
+        Vector3 randomTarget = new Vector3(
+            Random.Range(-75f, 75f),
+            Random.Range(-75f, 75f),
+            0f
+        );
+        speed = Random.Range(3f, maxSpeed);
+        direction = (randomTarget - transform.position).normalized;
     }
 
     void Update()
@@ -26,11 +33,16 @@ public class Asteroid : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.TryGetComponent(out IDamageable target))
+        if (collision.TryGetComponent(out IDamageable target) && !collision.TryGetComponent(out AsteroidHealth health))
         {
             target.TakeDamage(damage, CSteamID.Nil);
             StartCoroutine(PoolManager.Instance.ReleaseObject(PoolCategory.Asteroids, gameObject));
         }
+        //if (collision.TryGetComponent(out Bullet bullet))
+        //{
+        //    target.TakeDamage(damage, CSteamID.Nil);
+        //    StartCoroutine(PoolManager.Instance.ReleaseObject(PoolCategory.Asteroids, gameObject));
+        //}
     }
 
     private Vector3 GetRandomSpawnPosition()

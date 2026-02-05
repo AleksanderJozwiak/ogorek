@@ -16,6 +16,8 @@ public class AsteroidSpawner : MonoBehaviour
             timer = 0f;
 
             GameObject asteroid = PoolManager.Instance.PoolMap[PoolCategory.Asteroids].Get();
+            float randomZ = Random.Range(0f, 360f);
+            asteroid.transform.rotation = Quaternion.Euler(0, 0, randomZ);
             asteroid.SetActive(true);
 
             Vector3 pos = asteroid.transform.position;
@@ -26,7 +28,8 @@ public class AsteroidSpawner : MonoBehaviour
                 posX = pos.x,
                 posY = pos.y,
                 dirX = dir.x,
-                dirY = dir.y
+                dirY = dir.y,
+                rotZ = randomZ,
             };
 
             byte[] data = NetworkHelpers.StructToBytes(msg);

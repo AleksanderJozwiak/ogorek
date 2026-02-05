@@ -98,6 +98,7 @@ public class SteamNetworkingManager : MonoBehaviour
                         AsteroidSpawnMessage msg = NetworkHelpers.BytesToStruct<AsteroidSpawnMessage>(data);
                         GameObject asteroid = PoolManager.Instance.PoolMap[PoolCategory.Asteroids].Get();
                         asteroid.transform.position = new Vector3(msg.posX, msg.posY, 0f);
+                        asteroid.transform.rotation.Set(asteroid.transform.rotation.x, asteroid.transform.rotation.y, msg.rotZ, asteroid.transform.rotation.w);
                         asteroid.GetComponent<Asteroid>().SetDirection(new Vector3(msg.dirX, msg.dirY, 0f));
                         asteroid.SetActive(true);
                         break;
