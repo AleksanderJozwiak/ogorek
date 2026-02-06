@@ -13,6 +13,8 @@ public class TeamSpawnPoints
 
 public class GameSpawnManager : MonoBehaviour
 {
+    public static GameSpawnManager Instance;
+
     [Header("Teams (9 total, each with 2 slots)")]
     public TeamSpawnPoints[] teams = new TeamSpawnPoints[9];
     [SerializeField] ColorPalette colorPalette;
@@ -24,25 +26,16 @@ public class GameSpawnManager : MonoBehaviour
     private Camera _camera;
     private GameObject localPlayer;
 
-
-    public static GameSpawnManager Instance;
     private Dictionary<int, bool> teamBaseAlive = new();
-
     private Dictionary<int, PlanetHealth> teamBases = new();
 
     private bool isSpectating = false;
     private int currentSpectateIndex = 0;
     private List<Transform> livePlayers = new();
 
-    private bool isLastTeamStanding = false;
-    private float ltsCheckTimer = 1.0f;
-
-    private List<int> teamPlacements = new List<int>();
-
     private void Awake()
     {
         Instance = this;
-        // Initialize all teams as alive by default
         for (int i = 1; i <= 9; i++)
         {
             teamBaseAlive[i] = false;
@@ -64,17 +57,9 @@ public class GameSpawnManager : MonoBehaviour
             UpdateSpectateTargets();
             SwitchSpectateTarget();
         }
-
-        if (isLastTeamStanding && LobbyManager.Instance.IsHost)
-        {
-            ltsCheckTimer -= Time.deltaTime;
-            if (ltsCheckTimer <= 0f)
-            {
-                CheckLastTeamStanding();
-                ltsCheckTimer = 1.0f; 
-            }
-        }
     }
+
+    // --- SPAWN & RESPAWN ---
 
     public void RespawnPlayer(GameObject playerToRespawn)
     {
@@ -96,9 +81,10 @@ public class GameSpawnManager : MonoBehaviour
         int slotNum = int.Parse(split[1]);
         Transform spawnPoint = teams[teamNum - 1].slots[slotNum - 1];
 
+        // BED WARS LOGIC: Tylko jeœli baza ¿yje
         if (!IsTeamBaseAlive(teamNum))
         {
-            Debug.Log($"Team {teamNum}'s base is destroyed - no respawn allowed.");
+            Debug.Log($"Team {teamNum} base destroyed - no respawn.");
             if (targetId == SteamUser.GetSteamID())
                 StartSpectateMode();
             return;
@@ -109,6 +95,7 @@ public class GameSpawnManager : MonoBehaviour
 
         if (playerToRespawn.TryGetComponent<Rigidbody2D>(out var rb))
         {
+            rb.linearVelocity = Vector2.zero;
             rb.angularVelocity = 0f;
             rb.position = spawnPoint.position;
             rb.rotation = spawnPoint.eulerAngles.z;
@@ -116,32 +103,8 @@ public class GameSpawnManager : MonoBehaviour
 
         foreach (var trail in playerToRespawn.GetComponentsInChildren<TrailRenderer>())
             trail.Clear();
-    }
 
-    public void ShowRespawnUI(bool visible)
-    {
-        if (RespawnCounter != null)
-        {
-            RespawnCounter.alpha = visible ? 1 : 0;
-            RespawnCounter.blocksRaycasts = visible;
-            if (Counter != null)
-                Counter.text = visible ? "5" : "";
-        }
-    }
-
-    public void ShowSpectatorUI(bool visible)
-    {
-        if (SpectatorCanvas != null)
-        {
-            SpectatorCanvas.alpha = visible ? 1 : 0;
-            SpectatorCanvas.blocksRaycasts = visible;
-        }
-    }
-
-    public void UpdateRespawnCounter(int seconds)
-    {
-        if (Counter != null)
-            Counter.text = seconds.ToString();
+        playerToRespawn.SetActive(true);
     }
 
     void SpawnLocalPlayer()
@@ -177,7 +140,9 @@ public class GameSpawnManager : MonoBehaviour
 
         var trails = localPlayer.GetComponentsInChildren<TrailRenderer>();
         MaterialPropertyBlock trailBlock = new();
-        trailBlock.SetColor("_TeamColor", colorPalette.Colors[teamNum - 1]);
+        if (colorPalette != null && colorPalette.Colors.Length >= teamNum)
+            trailBlock.SetColor("_TeamColor", colorPalette.Colors[teamNum - 1]);
+
         foreach (TrailRenderer trail in trails)
             trail.SetPropertyBlock(trailBlock);
 
@@ -185,9 +150,12 @@ public class GameSpawnManager : MonoBehaviour
         _camera.GetComponent<CameraFollow>().target = localPlayer.transform;
     }
 
+    // --- BASE MANAGEMENT ---
+
     public void RegisterTeamBase(int team, PlanetHealth healthComponent)
     {
         teamBases[team] = healthComponent;
+        teamBaseAlive[team] = true;
     }
 
     public void UnregisterTeamBase(int team)
@@ -196,11 +164,53 @@ public class GameSpawnManager : MonoBehaviour
             teamBases.Remove(team);
     }
 
+    public void SetTeamBaseState(int team, bool alive)
+    {
+        teamBaseAlive[team] = alive;
+        // USUNIÊTO: CheckForGameEnd(). 
+        // Teraz GameSpawnManager NIE decyduje o koñcu gry. Robi to StatsManager.
+    }
+
+    public bool IsTeamBaseAlive(int team)
+    {
+        return teamBaseAlive.TryGetValue(team, out bool alive) && alive;
+    }
+
+    // --- GAME END (Wywo³ywane przez StatsManagera) ---
+
+    public void TriggerGameEnd(int winningTeam)
+    {
+        if (LobbyManager.Instance == null || !LobbyManager.Instance.IsHost) return;
+
+        Debug.Log($"GameSpawnManager: Triggering Game End. Winner: {winningTeam}");
+
+        // UWAGA: Nie wywo³ujemy tu FinalizeStats, bo StatsManager ju¿ to zrobi³ przed wywo³aniem tej metody!
+
+        // 1. Pakowanie danych
+        var allStats = StatsManager.Instance.GetAllStats();
+        string statsJson = JsonUtility.ToJson(new PlayerStatsListWrapper { stats = allStats });
+        string payload = winningTeam + "|" + statsJson;
+        byte[] payloadBytes = System.Text.Encoding.UTF8.GetBytes(payload);
+
+        // 2. Wys³anie pakietu
+        byte[] packet = new byte[payloadBytes.Length + 1];
+        packet[0] = (byte)PacketType.GameEnd;
+        System.Buffer.BlockCopy(payloadBytes, 0, packet, 1, payloadBytes.Length);
+
+        foreach (CSteamID member in LobbyManager.Instance.GetAllLobbyMembers())
+        {
+            if (member != SteamUser.GetSteamID())
+                SteamNetworking.SendP2PPacket(member, packet, (uint)packet.Length, EP2PSend.k_EP2PSendReliable);
+        }
+
+        // 3. Zmiana sceny u Hosta
+        LobbyManager.Instance.LoadScene("Statistics");
+    }
+
     public void HandlePlayerLeave(CSteamID leavingPlayerId)
     {
         if (LobbyManager.Instance == null || !LobbyManager.Instance.IsHost) return;
 
-        // 1. ZnajdŸ dru¿ynê gracza, który wyszed³
         string slotMeta = SteamMatchmaking.GetLobbyMemberData(
             LobbyManager.Instance.currentLobby,
             leavingPlayerId,
@@ -208,18 +218,16 @@ public class GameSpawnManager : MonoBehaviour
         );
 
         if (string.IsNullOrEmpty(slotMeta)) return;
+        int teamNum = int.Parse(slotMeta.Split('_')[0]);
 
-        string[] split = slotMeta.Split('_');
-        int teamNum = int.Parse(split[0]);
-
-        int memberCount = SteamMatchmaking.GetNumLobbyMembers(LobbyManager.Instance.currentLobby);
+        // SprawdŸ czy team jest pusty
         bool teamIsEmpty = true;
+        int memberCount = SteamMatchmaking.GetNumLobbyMembers(LobbyManager.Instance.currentLobby);
+
         for (int i = 0; i < memberCount; i++)
         {
             CSteamID member = SteamMatchmaking.GetLobbyMemberByIndex(LobbyManager.Instance.currentLobby, i);
-
             if (member == leavingPlayerId) continue;
-
             string memberSlot = SteamMatchmaking.GetLobbyMemberData(LobbyManager.Instance.currentLobby, member, "slot");
             if (!string.IsNullOrEmpty(memberSlot) && memberSlot.StartsWith($"{teamNum}_"))
             {
@@ -230,7 +238,7 @@ public class GameSpawnManager : MonoBehaviour
 
         if (teamIsEmpty)
         {
-            Debug.Log($"Dru¿yna {teamNum} jest pusta. Host niszczy bazê.");
+            // Jeœli team pusty -> niszczymy bazê, co uruchomi lawinê w StatsManagerze
             if (teamBases.TryGetValue(teamNum, out PlanetHealth baseHealth) && baseHealth != null)
             {
                 baseHealth.TakeDamage(99999f, CSteamID.Nil);
@@ -238,171 +246,38 @@ public class GameSpawnManager : MonoBehaviour
             else
             {
                 SetTeamBaseState(teamNum, false);
-            }
-        }
-    }
-
-    public void SetTeamBaseState(int team, bool alive)
-    {
-        teamBaseAlive[team] = alive;
-        Debug.Log($"Team {team} base state updated: {(alive ? "ALIVE" : "DESTROYED")}");
-
-        if (!isLastTeamStanding && !alive)
-        {
-            if (!teamPlacements.Contains(team))
-            {
-                teamPlacements.Insert(0, team);
-            }
-
-            CheckForGameEnd();
-        }
-    }
-
-    private void CheckForGameEnd()
-    {
-        // Ta logika powinna byæ wykonywana TYLKO przez hosta i TYLKO przed LTS
-        if (isLastTeamStanding) return;
-        if (LobbyManager.Instance == null || !LobbyManager.Instance.IsHost) return;
-        if (LobbyManager.Instance.currentLobby == CSteamID.Nil) return;
-
-        // 1. ZnajdŸ wszystkie dru¿yny, które maj¹ aktywne bazy
-        List<int> survivingBaseTeams = new List<int>();
-        foreach (var entry in teamBaseAlive)
-        {
-            if (entry.Value) survivingBaseTeams.Add(entry.Key);
-        }
-
-        // 2. Faza "Base Attack": Jeœli > 1 baza ¿yje, gra trwa normalnie.
-        if (survivingBaseTeams.Count > 1)
-        {
-            return;
-        }
-
-        // 3. Faza "Last Base Standing": Dok³adnie 1 baza ¿yje.
-        if (survivingBaseTeams.Count == 1)
-        {
-            int lastTeamNum = survivingBaseTeams[0];
-
-            // SprawdŸ, czy ta dru¿yna ma graczy
-            bool teamHasPlayers = false;
-            foreach (CSteamID member in LobbyManager.Instance.GetAllLobbyMembers())
-            {
-                string slot = SteamMatchmaking.GetLobbyMemberData(LobbyManager.Instance.currentLobby, member, "slot");
-                if (!string.IsNullOrEmpty(slot) && slot.StartsWith($"{lastTeamNum}_"))
-                {
-                    teamHasPlayers = true;
-                    break;
-                }
-            }
-
-            // Warunek "Bedwars": Ostatnia baza + s¹ gracze = WYGRANA
-            if (teamHasPlayers)
-            {
-                Debug.Log($"Gra zakoñczona (Bedwars)! Wygrywa dru¿yna {lastTeamNum}.");
-                SendGameEndMessage(lastTeamNum);
-                return; // Gra zakoñczona
-            }
-
-            // Jeœli !teamHasPlayers (ostatnia baza nale¿y do pustej dru¿yny),
-            // nie robimy `return`. Logika przechodzi do Fazy 4 (przejœcie do LTS).
-        }
-
-        // 4. Faza "LTS Transition":
-        // Dzieje siê, gdy (survivingBaseTeams.Count == 0) LUB (Count == 1 ale teamHasPlayers == false)
-
-        Debug.Log("Bazy zniszczone lub ostatnia baza pusta. Przejœcie do Last Team Standing (LTS).");
-        isLastTeamStanding = true;
-
-        // Host automatycznie zacznie teraz sprawdzaæ `CheckLastTeamStanding()` w Update.
-        // Mo¿na tu wys³aæ pakiet do klientów, aby wyœwietlili np. "SUDDEN DEATH!"
-    }
-
-    private void CheckLastTeamStanding()
-    {
-        // (Sprawdzenie IsHost jest ju¿ w Update)
-
-        var allPlayers = FindObjectsByType<PlayerIdentity>(FindObjectsSortMode.None);
-
-        HashSet<int> activeTeams = new HashSet<int>();
-        int alivePlayerCount = 0;
-
-        foreach (var player in allPlayers)
-        {
-            // Polegamy na `activeSelf`. 
-            // PlayerHealth (lokalny) musi siê sam deaktywowaæ przy permanentnej œmierci.
-            // RemotePlayerManager (zdalny) deaktywuje obiekt, gdy otrzyma msg.isAlive = false.
-            if (player.gameObject.activeSelf)
-            {
-                alivePlayerCount++;
-                // Tag jest ustawiany przy spawnowaniu
-                if (int.TryParse(player.tag.Split('_')[1], out int teamNum))
-                {
-                    activeTeams.Add(teamNum);
-                }
+                StatsManager.Instance?.SetPlanetState(teamNum, false);
             }
         }
 
-        // Jeœli zosta³o > 1 dru¿yn (np. gracz z team 1 walczy z graczem z team 2), gra trwa
-        if (activeTeams.Count > 1)
-        {
-            return;
-        }
+        // Wa¿ne: powiadom StatsManagera, ¿e gracz fizycznie znikn¹³ (nie ¿yje)
+        StatsManager.Instance?.SetPlayerAliveState(leavingPlayerId, false);
+    }
 
-        // Jeœli zosta³a 1 dru¿yna (nawet jeœli jest to 1 gracz)
-        if (activeTeams.Count == 1)
-        {
-            int winningTeam = activeTeams.First();
-            Debug.Log($"Gra zakoñczona (LTS)! Wygrywa dru¿yna {winningTeam}.");
-            SendGameEndMessage(winningTeam);
-            isLastTeamStanding = false; // Zatrzymaj sprawdzanie
-            return;
-        }
+    // --- UI & SPECTATOR ---
 
-        // Jeœli zosta³o 0 dru¿yn (activeTeams.Count == 0)
-        // Oznacza to, ¿e nie ma ¿ywych graczy (alivePlayerCount == 0)
-        // Ostatni gracze zabili siê nawzajem.
-        if (alivePlayerCount == 0 && activeTeams.Count == 0)
+    public void ShowRespawnUI(bool visible)
+    {
+        if (RespawnCounter != null)
         {
-            Debug.Log("LTS: Wszyscy gracze zginêli. Remis. Koñczê grê.");
-            SendGameEndMessage(-1); // Remis (-1)
-            isLastTeamStanding = false; // Zatrzymaj sprawdzanie
+            RespawnCounter.alpha = visible ? 1 : 0;
+            RespawnCounter.blocksRaycasts = visible;
+            if (Counter != null) Counter.text = visible ? "5" : "";
         }
     }
 
-    private void SendGameEndMessage(int winningTeam)
+    public void ShowSpectatorUI(bool visible)
     {
-        // 1. Obliczamy placementy u Hosta
-        StatsManager.Instance?.FinalizeStats(winningTeam, teamPlacements);
-
-        // 2. Przygotowujemy dane do wys³ania (JSON)
-        var allStats = StatsManager.Instance.GetAllStats();
-        string statsJson = JsonUtility.ToJson(new PlayerStatsListWrapper { stats = allStats });
-
-        // Format: "winningTeam|json_string"
-        string payload = winningTeam + "|" + statsJson;
-        byte[] payloadBytes = System.Text.Encoding.UTF8.GetBytes(payload);
-
-        // 3. Budujemy pakiet: [PacketType][Payload]
-        byte[] packet = new byte[payloadBytes.Length + 1];
-        packet[0] = (byte)PacketType.GameEnd;
-        System.Buffer.BlockCopy(payloadBytes, 0, packet, 1, payloadBytes.Length);
-
-        // 4. Rozsy³amy
-        SteamNetworkingManager.Instance.BroadcastPacket(packet, EP2PSend.k_EP2PSendReliable);
-
-        // Host zmienia scenê
-        LobbyManager.Instance.LoadScene("Statistics");
+        if (SpectatorCanvas != null)
+        {
+            SpectatorCanvas.alpha = visible ? 1 : 0;
+            SpectatorCanvas.blocksRaycasts = visible;
+        }
     }
 
-    [System.Serializable]
-    public class PlayerStatsListWrapper
+    public void UpdateRespawnCounter(int seconds)
     {
-        public List<PlayerStats> stats;
-    }
-
-    public bool IsTeamBaseAlive(int team)
-    {
-        return teamBaseAlive.TryGetValue(team, out bool alive) && alive;
+        if (Counter != null) Counter.text = seconds.ToString();
     }
 
     public void StartSpectateMode()
@@ -411,8 +286,7 @@ public class GameSpawnManager : MonoBehaviour
         isSpectating = true;
         ShowSpectatorUI(true);
 
-        if (localPlayer != null)
-            localPlayer.SetActive(false);
+        if (localPlayer != null) localPlayer.SetActive(false);
 
         UpdateSpectateTargets();
         SwitchSpectateTarget();
@@ -421,22 +295,15 @@ public class GameSpawnManager : MonoBehaviour
     private void UpdateSpectateTargets()
     {
         livePlayers.Clear();
-
         foreach (var identity in FindObjectsByType<PlayerIdentity>(FindObjectsSortMode.None))
         {
-            if (identity.SteamId == SteamUser.GetSteamID())
-                continue;
+            if (identity.SteamId == SteamUser.GetSteamID()) continue;
 
-            GameObject playerGO = identity.gameObject;
-            if (playerGO.TryGetComponent<PlayerHealth>(out var health))
+            GameObject p = identity.gameObject;
+            // Dodajemy do obserwowanych, jeœli obiekt jest aktywny LUB (ma Health i ¿yje logicznie)
+            if (p.activeSelf || (p.TryGetComponent<PlayerHealth>(out var h) && h.IsAlive()))
             {
-                if (health.IsAlive())
-                    livePlayers.Add(playerGO.transform);
-            }
-            else
-            {
-                if (playerGO.activeSelf)
-                    livePlayers.Add(playerGO.transform);
+                livePlayers.Add(p.transform);
             }
         }
     }
@@ -445,19 +312,24 @@ public class GameSpawnManager : MonoBehaviour
     {
         if (livePlayers.Count == 0)
         {
-            Debug.Log("No live players to spectate.");
-            if (nickname != null)
-                nickname.text = "No players to spectate";
+            if (nickname != null) nickname.text = "No players";
             return;
         }
 
         currentSpectateIndex = (currentSpectateIndex + 1) % livePlayers.Count;
         Transform nextTarget = livePlayers[currentSpectateIndex];
 
-        _camera.GetComponent<CameraFollow>().target = nextTarget;
-        CSteamID memberId = nextTarget.gameObject.GetComponent<PlayerIdentity>().SteamId;
-        if (nickname != null)
-            nickname.text = SteamFriends.GetFriendPersonaName(memberId);
-        Debug.Log($"Spectating: {nextTarget.name}");
+        if (nextTarget != null)
+        {
+            _camera.GetComponent<CameraFollow>().target = nextTarget;
+            CSteamID memberId = nextTarget.gameObject.GetComponent<PlayerIdentity>().SteamId;
+            if (nickname != null) nickname.text = SteamFriends.GetFriendPersonaName(memberId);
+        }
+    }
+
+    [System.Serializable]
+    public class PlayerStatsListWrapper
+    {
+        public List<PlayerStats> stats;
     }
 }

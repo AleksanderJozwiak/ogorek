@@ -106,10 +106,36 @@ public class SteamNetworkingManager : MonoBehaviour
 
                     case PacketType.GameEnd:
                     {
-                        // Klient otrzymuje wiadomoœæ i przechodzi do sceny statystyk
-                        // Mo¿esz tu zapisaæ dane o zwyciêzcy, jeœli s¹ potrzebne
-                        // GameEndMessage msg = NetworkHelpers.BytesToStruct<GameEndMessage>(data);
-                        Debug.Log("Otrzymano GameEnd. £adowanie sceny Statistics...");
+                        Debug.Log("CLIENT: Odebrano pakiet GAME END. Przetwarzanie...");
+
+                        string payload = System.Text.Encoding.UTF8.GetString(data);
+
+                        // Payload to: "WINNING_TEAM_ID|JSON_STATS"
+                        string[] parts = payload.Split('|');
+
+                        if (parts.Length < 2)
+                        {
+                            Debug.LogError("CLIENT ERROR: Nieprawid³owy format pakietu GameEnd!");
+                            break;
+                        }
+
+                        int winningTeam = int.Parse(parts[0]);
+                        string jsonStats = parts[1];
+
+                        Debug.Log($"CLIENT: Zwyciêzca: {winningTeam}, JSON length: {jsonStats.Length}");
+
+                        // Odtwórz listê statystyk z JSONa
+                        var wrapper = JsonUtility.FromJson<GameSpawnManager.PlayerStatsListWrapper>(jsonStats);
+
+                        if (StatsManager.Instance != null)
+                        {
+                            StatsManager.Instance.LoadStatsFromHost(winningTeam, wrapper.stats);
+                        }
+                        else
+                        {
+                            Debug.LogError("CLIENT ERROR: Brak StatsManager na scenie!");
+                        }
+
                         LobbyManager.Instance.LoadScene("Statistics");
                         break;
                     }

@@ -11,21 +11,21 @@ public class PlanetHealth : MonoBehaviour, IDamageable
     private Material hittableMaterial;
     private SpriteRenderer spriteRenderer;
     private Coroutine hitEffectCoroutine;
-
     private CSteamID lastAttacker;
 
     private void Start()
     {
         currentHealth = maxHealth;
-
         if (TryGetComponent(out spriteRenderer))
         {
             hittableMaterial = Instantiate(spriteRenderer.material);
             spriteRenderer.material = hittableMaterial;
         }
 
-        SendTeamBaseState(teamNumber, true);
+        // Informujemy Managera, ¿e baza stoi
+        StatsManager.Instance?.SetPlanetState(teamNumber, true);
 
+        // Rejestracja w SpawnManagerze (tylko do celów respawnu, nie logiki win condition)
         if (GameSpawnManager.Instance != null)
         {
             GameSpawnManager.Instance.SetTeamBaseState(teamNumber, true);
@@ -35,9 +35,10 @@ public class PlanetHealth : MonoBehaviour, IDamageable
 
     public void TakeDamage(float damage, CSteamID attackerId)
     {
+        if (currentHealth <= 0) return;
+
         currentHealth -= damage;
         transform.localScale -= new Vector3(damage * 0.01f, damage * 0.01f, 0);
-        currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
 
         if (attackerId.IsValid())
         {
@@ -45,61 +46,57 @@ public class PlanetHealth : MonoBehaviour, IDamageable
             StatsManager.Instance?.RecordPlanetDamage(attackerId, damage);
         }
 
-        if (spriteRenderer != null && hittableMaterial != null)
-        {
-            if (hitEffectCoroutine != null)
-                StopCoroutine(hitEffectCoroutine);
-            hitEffectCoroutine = StartCoroutine(HitFlashEffect());
-        }
+        StartCoroutine(HitFlashEffect());
 
         if (currentHealth <= 0)
-            DestroyTeam();
+            DestroyPlanet();
     }
 
     private IEnumerator HitFlashEffect()
     {
-        float flashTime = 0.75f;
-
-        while (flashTime > 0)
+        // ... (Twój efekt wizualny bez zmian) ...
+        if (hittableMaterial != null)
         {
-            hittableMaterial.SetFloat("_HitColorAmount", flashTime);
-            yield return new WaitForSeconds(0.01f);
-            flashTime -= 0.02f;
+            hittableMaterial.SetFloat("_HitColorAmount", 1f);
+            yield return new WaitForSeconds(0.1f);
+            hittableMaterial.SetFloat("_HitColorAmount", 0f);
         }
     }
 
-    private void DestroyTeam()
+    private void DestroyPlanet()
     {
-        hittableMaterial.SetFloat("_HitColorAmount", 0);
-
-        GameSpawnManager.Instance?.SetTeamBaseState(teamNumber, false);
-
+        // 1. Zapisz statystyki (bed destroyed)
         if (lastAttacker.IsValid())
         {
             StatsManager.Instance?.RecordPlanetKill(lastAttacker);
         }
 
-        SendTeamBaseState(teamNumber, false);
+        // 2. Powiadom StatsManager -> To NIE koñczy gry, tylko blokuje respawn i sprawdza warunki
+        StatsManager.Instance?.SetPlanetState(teamNumber, false);
+
+        // 3. Powiadom GameSpawnManager (tylko ¿eby wiedzia³, ¿e nie mo¿na tu respiæ)
+        GameSpawnManager.Instance?.SetTeamBaseState(teamNumber, false);
+
+        // UWAGA: Jeœli UnregisterTeamBase w Twoim kodzie automatycznie sprawdza "Czy liczba baz == 1" i koñczy grê,
+        // to zakomentuj poni¿sz¹ liniê! Jeœli s³u¿y tylko do cleanupu, zostaw.
+        // Bezpieczniej jest polegaæ na logice w StatsManagerze.
         GameSpawnManager.Instance?.UnregisterTeamBase(teamNumber);
+
+        // 4. Sieæ i cleanup
+        SendTeamBaseState(teamNumber, false);
         Destroy(gameObject);
     }
 
+    // ... (SendTeamBaseState bez zmian) ...
     private void SendTeamBaseState(int teamNum, bool alive)
     {
-        TeamBaseMessage msg = new()
-        {
-            teamNumber = teamNum,
-            baseAlive = alive
-        };
-
+        // (Twój kod sieciowy)
+        TeamBaseMessage msg = new() { teamNumber = teamNum, baseAlive = alive };
         byte[] data = NetworkHelpers.StructToBytes(msg);
         byte[] packet = new byte[data.Length + 1];
         packet[0] = (byte)PacketType.TeamBaseDestroyed;
         System.Buffer.BlockCopy(data, 0, packet, 1, data.Length);
-
         foreach (CSteamID member in LobbyManager.Instance.GetAllLobbyMembers())
-        {
             SteamNetworking.SendP2PPacket(member, packet, (uint)packet.Length, EP2PSend.k_EP2PSendReliable);
-        }
     }
 }

@@ -25,7 +25,7 @@ public class Asteroid : MonoBehaviour
         direction = (randomTarget - transform.position).normalized;
     }
 
-    void Update()
+    void FixedUpdate()
     {
         transform.position += direction * speed * Time.deltaTime;
     }

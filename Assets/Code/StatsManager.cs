@@ -3,49 +3,46 @@ using Steamworks;
 using System.Collections.Generic;
 using System.Linq;
 
-// Struktura przechowuj¹ca statystyki dla jednego gracza
 public class PlayerStats
 {
     public ulong SteamId;
     public string Name;
     public int Team;
+    public bool IsAlive = true; // Czy statek gracza fizycznie istnieje na mapie?
 
     public int PlanetsDestroyed = 0;
     public int Kills = 0;
+    public int FinalKills = 0;
     public int Assists = 0;
     public int Deaths = 0;
     public float TotalDamageDealt = 0;
     public int Placement = 0;
 
-    // S³ownik do œledzenia obra¿eñ zadanych konkretnym ofiarom (na potrzeby asyst)
-    // Key: victimSteamId, Value: damageDealt
     public Dictionary<ulong, float> DamageContributions = new Dictionary<ulong, float>();
 }
 
-// Singleton DontDestroyOnLoad do zarz¹dzania statystykami
 public class StatsManager : MonoBehaviour
 {
     public static StatsManager Instance;
 
-    // S³ownik wszystkich graczy i ich statystyk
     private Dictionary<ulong, PlayerStats> allPlayerStats = new Dictionary<ulong, PlayerStats>();
+    private Dictionary<int, bool> teamPlanetsAlive = new Dictionary<int, bool>();
 
-    // Ostateczne wyniki gry
+    // Lista dru¿yn w kolejnoœci odpadania (pierwszy na liœcie = odpad³ jako pierwszy)
+    private List<int> eliminationOrder = new List<int>();
+
     public int WinningTeam { get; private set; } = -1;
     private Dictionary<int, int> teamPlacements = new Dictionary<int, int>();
 
     private void Awake()
     {
-        if (Instance != null)
-        {
-            Destroy(gameObject);
-            return;
-        }
+        if (Instance != null) { Destroy(gameObject); return; }
         Instance = this;
         DontDestroyOnLoad(gameObject);
     }
 
-    // Wywo³ywane, gdy gracz (lokalny lub zdalny) jest tworzony
+    // --- INICJALIZACJA I REJESTRACJA ---
+
     public void InitializePlayer(CSteamID steamId, int team)
     {
         ulong id = steamId.m_SteamID;
@@ -55,160 +52,238 @@ public class StatsManager : MonoBehaviour
             {
                 SteamId = id,
                 Name = SteamFriends.GetFriendPersonaName(steamId),
-                Team = team
+                Team = team,
+                IsAlive = true // Na starcie gracz ¿yje
             };
-            Debug.Log($"StatsManager: Zarejestrowano gracza {allPlayerStats[id].Name} (Team {team})");
+
+            if (!teamPlanetsAlive.ContainsKey(team))
+                teamPlanetsAlive[team] = true;
         }
     }
 
-    // Rejestruje obra¿enia zadane innemu graczowi
-    public void RecordPlayerDamage(CSteamID attackerId, CSteamID victimId, float damage, float victimMaxHealth)
+    // --- LOGIKA STANU GRY (BED WARS) ---
+
+    public void SetPlanetState(int teamId, bool isAlive)
     {
-        if (!attackerId.IsValid() || attackerId == victimId) return;
+        teamPlanetsAlive[teamId] = isAlive;
+        CheckTeamElimination(teamId); // SprawdŸ, czy to zniszczenie wyeliminowa³o dru¿ynê
+    }
 
-        ulong attId = attackerId.m_SteamID;
-        ulong vicId = victimId.m_SteamID;
-
-        if (!allPlayerStats.ContainsKey(attId)) return; // Atakuj¹cy nie jest zarejestrowany?
-
-        // 1. Zwiêksz ³¹czne obra¿enia atakuj¹cego
-        allPlayerStats[attId].TotalDamageDealt += damage;
-
-        // 2. ŒledŸ obra¿enia na potrzeby asyst
-        if (!allPlayerStats[attId].DamageContributions.ContainsKey(vicId))
+    public void SetPlayerAliveState(CSteamID steamId, bool isAlive)
+    {
+        ulong id = steamId.m_SteamID;
+        if (allPlayerStats.TryGetValue(id, out PlayerStats stats))
         {
-            allPlayerStats[attId].DamageContributions[vicId] = 0;
+            stats.IsAlive = isAlive;
+            if (!isAlive)
+            {
+                CheckTeamElimination(stats.Team); // SprawdŸ, czy œmieræ gracza wyeliminowa³a dru¿ynê
+            }
         }
-        allPlayerStats[attId].DamageContributions[vicId] += damage;
     }
 
-    // Rejestruje obra¿enia zadane planecie
-    public void RecordPlanetDamage(CSteamID attackerId, float damage)
+    public bool IsTeamPlanetAlive(int teamId)
     {
-        if (!attackerId.IsValid()) return;
-        ulong attId = attackerId.m_SteamID;
-
-        if (!allPlayerStats.ContainsKey(attId)) return;
-        allPlayerStats[attId].TotalDamageDealt += damage;
+        if (teamPlanetsAlive.TryGetValue(teamId, out bool alive)) return alive;
+        return false;
     }
 
-    // Rejestruje zabójstwo gracza
+    // Kluczowa funkcja: Sprawdza, czy dru¿yna definitywnie przegra³a
+    private void CheckTeamElimination(int teamId)
+    {
+        // 1. Jeœli planeta ¿yje -> Dru¿yna jest bezpieczna
+        if (IsTeamPlanetAlive(teamId)) return;
+
+        // 2. Jeœli planeta zniszczona, sprawdzamy czy ¿yje jakikolwiek gracz z tej dru¿yny
+        bool anyPlayerAlive = allPlayerStats.Values
+            .Where(p => p.Team == teamId)
+            .Any(p => p.IsAlive);
+
+        if (anyPlayerAlive) return; // Ktoœ jeszcze walczy statkiem -> Dru¿yna gra dalej
+
+        // 3. Brak planety + Brak ¿ywych graczy -> ELIMINACJA
+        if (!eliminationOrder.Contains(teamId))
+        {
+            eliminationOrder.Add(teamId);
+            Debug.Log($"StatsManager: Dru¿yna {teamId} zosta³a wyeliminowana!");
+
+            CheckWinCondition(); // SprawdŸ, czy gra siê skoñczy³a
+        }
+    }
+
+    private void CheckWinCondition()
+    {
+        HashSet<int> allTeams = new HashSet<int>();
+        foreach (var p in allPlayerStats.Values) allTeams.Add(p.Team);
+
+        int totalTeams = allTeams.Count;
+        // Zabezpieczenie na wypadek testów solo
+        if (totalTeams < 2) totalTeams = 2;
+
+        int eliminatedTeamsCount = eliminationOrder.Count;
+
+        // WARUNEK ZWYCIÊSTWA: Zosta³a 1 (lub 0 w przypadku remisu) dru¿yna
+        if (totalTeams - eliminatedTeamsCount <= 1)
+        {
+            int winner = -1;
+            // Szukamy dru¿yny, której nie ma na liœcie wyeliminowanych
+            foreach (int team in allTeams)
+            {
+                if (!eliminationOrder.Contains(team))
+                {
+                    winner = team;
+                    break;
+                }
+            }
+
+            Debug.Log($"GAME OVER! Wygrywa dru¿yna: {winner}");
+
+            // 1. Oblicz statystyki
+            FinalizeStats(winner, eliminationOrder);
+
+            // 2. Wyzwól koniec gry w SpawnManagerze (który tylko wyœle pakiet)
+            GameSpawnManager.Instance?.TriggerGameEnd(winner);
+        }
+    }
+
+    // --- REJESTRACJA ZDARZEÑ ---
+
     public void RecordKill(CSteamID killerId, CSteamID victimId, float victimMaxHealth)
     {
         ulong killId = killerId.m_SteamID;
         ulong vicId = victimId.m_SteamID;
+        bool isFinalKill = false;
+
+        if (allPlayerStats.TryGetValue(vicId, out PlayerStats victimStats))
+        {
+            // Jeœli planeta ofiary nie ¿yje -> To jest Final Kill
+            if (!IsTeamPlanetAlive(victimStats.Team))
+                isFinalKill = true;
+        }
 
         if (allPlayerStats.ContainsKey(killId))
         {
-            // 1. Zwiêksz liczbê zabójstw
-            allPlayerStats[killId].Kills++;
-            Debug.Log($"StatsManager: {allPlayerStats[killId].Name} zdoby³ KILLA!");
+            if (isFinalKill)
+                allPlayerStats[killId].FinalKills++;
+            else
+                allPlayerStats[killId].Kills++;
         }
 
-        // 2. SprawdŸ asysty
-        // Próg 60% (3 z 5 to 60%)
-        float assistThreshold = victimMaxHealth * 0.60f;
-
+        // Asysty...
+        float assistThreshold = victimMaxHealth * 0.50f;
         foreach (var attackerStats in allPlayerStats.Values)
         {
-            // Pomijamy zabójcê
             if (attackerStats.SteamId == killId) continue;
-
-            if (attackerStats.DamageContributions.TryGetValue(vicId, out float damageDealt))
+            if (attackerStats.DamageContributions.TryGetValue(vicId, out float dmg) && dmg >= assistThreshold)
             {
-                if (damageDealt >= assistThreshold)
-                {
-                    attackerStats.Assists++;
-                    Debug.Log($"StatsManager: {attackerStats.Name} zdoby³ ASYSTÊ!");
-                }
+                attackerStats.Assists++;
             }
         }
 
-        // 3. Wyczyœæ wk³ad obra¿eñ dla tej ofiary u wszystkich
+        // Czyœæ dmg log
         foreach (var stats in allPlayerStats.Values)
-        {
-            if (stats.DamageContributions.ContainsKey(vicId))
-            {
-                stats.DamageContributions.Remove(vicId);
-            }
-        }
+            if (stats.DamageContributions.ContainsKey(vicId)) stats.DamageContributions.Remove(vicId);
     }
 
-    // Rejestruje zniszczenie planety
     public void RecordPlanetKill(CSteamID killerId)
     {
-        if (!killerId.IsValid()) return;
-        ulong killId = killerId.m_SteamID;
-
-        if (allPlayerStats.ContainsKey(killId))
-        {
-            allPlayerStats[killId].PlanetsDestroyed++;
-            Debug.Log($"StatsManager: {allPlayerStats[killId].Name} zniszczy³ PLANETÊ!");
-        }
+        if (killerId.IsValid() && allPlayerStats.ContainsKey(killerId.m_SteamID))
+            allPlayerStats[killerId.m_SteamID].PlanetsDestroyed++;
     }
 
-    // Rejestruje œmieræ gracza
     public void RecordDeath(CSteamID victimId)
     {
-        ulong vicId = victimId.m_SteamID;
-        if (allPlayerStats.ContainsKey(vicId))
+        if (allPlayerStats.ContainsKey(victimId.m_SteamID))
+            allPlayerStats[victimId.m_SteamID].Deaths++;
+
+        // WA¯NE: Oznaczamy, ¿e gracz fizycznie zgin¹³
+        SetPlayerAliveState(victimId, false);
+    }
+
+    public void RecordRespawn(CSteamID playerId)
+    {
+        // WA¯NE: Oznaczamy, ¿e gracz wróci³ do gry
+        SetPlayerAliveState(playerId, true);
+    }
+
+    public void RecordPlanetDamage(CSteamID attackerId, float damage)
+    {
+        if (attackerId.IsValid() && allPlayerStats.ContainsKey(attackerId.m_SteamID))
+            allPlayerStats[attackerId.m_SteamID].TotalDamageDealt += damage;
+    }
+
+    public void RecordPlayerDamage(CSteamID attackerId, CSteamID victimId, float damage, float maxHp)
+    {
+        if (!attackerId.IsValid() || attackerId == victimId) return;
+        ulong attId = attackerId.m_SteamID;
+        if (allPlayerStats.TryGetValue(attId, out PlayerStats stats))
         {
-            allPlayerStats[vicId].Deaths++;
+            stats.TotalDamageDealt += damage;
+            if (!stats.DamageContributions.ContainsKey(victimId.m_SteamID)) stats.DamageContributions[victimId.m_SteamID] = 0;
+            stats.DamageContributions[victimId.m_SteamID] += damage;
         }
     }
 
-    // Zapisuje ostateczne wyniki gry
-    public void FinalizeStats(int winningTeam, List<int> placementList)
-    {
-        this.WinningTeam = winningTeam;
+    // --- FINALIZACJA I PLACEMENT ---
 
-        // Wyczyœæ stare miejsca
+    public void FinalizeStats(int winningTeamId, List<int> eliminatedTeamsOrder)
+    {
+        WinningTeam = winningTeamId;
         teamPlacements.Clear();
 
-        // Lista `placementList` zawiera przegranych, od ostatniego miejsca (index 0)
-        // do drugiego miejsca (index N-1)
-        int currentPlace = placementList.Count + 1;
-        foreach (int team in placementList)
+        // Policz ile unikalnych dru¿yn w ogóle gra³o
+        HashSet<int> participatingTeams = new HashSet<int>();
+        foreach (var p in allPlayerStats.Values) participatingTeams.Add(p.Team);
+        int totalTeams = participatingTeams.Count;
+
+        // Zabezpieczenie: jeœli gra³o mniej ni¿ 2 teamy (testy), zak³adamy 2 dla logiki miejsc
+        if (totalTeams < 2) totalTeams = 2;
+
+        // Pêtla przydzielania miejsc PRZEGRANYM
+        // i=0 to pierwszy wyeliminowany (ostatnie miejsce)
+        for (int i = 0; i < eliminatedTeamsOrder.Count; i++)
         {
-            teamPlacements[team] = currentPlace;
-            currentPlace--;
+            int teamId = eliminatedTeamsOrder[i];
+
+            // Logika: 
+            // Total = 2. i=0. Place = 2 - 0 = 2. (2nd place) - POPRAWNE
+            // Total = 4. i=0. Place = 4 - 0 = 4. (4th place) - POPRAWNE
+            // Total = 4. i=2. Place = 4 - 2 = 2. (2nd place) - POPRAWNE
+            int place = totalTeams - i;
+            teamPlacements[teamId] = place;
         }
 
-        // Zwyciêzca jest na 1. miejscu
-        if (winningTeam > 0)
+        // Przydzielenie 1 miejsca ZWYCIÊZCZY
+        if (winningTeamId != -1)
         {
-            teamPlacements[winningTeam] = 1;
+            teamPlacements[winningTeamId] = 1;
         }
 
-        // Zaktualizuj statystyki ka¿dego gracza o jego miejsce
+        // Zaktualizuj poszczególnych graczy
         foreach (var stats in allPlayerStats.Values)
         {
             if (teamPlacements.TryGetValue(stats.Team, out int place))
             {
                 stats.Placement = place;
             }
+            // Jeœli z jakiegoœ powodu gracza nie ma w placementach (np. b³¹d), daj 0
+            else
+            {
+                stats.Placement = 0;
+            }
         }
-    }
-
-    // Pobiera wszystkie statystyki (do u¿ycia w scenie Statistics)
-    public List<PlayerStats> GetAllStats()
-    {
-        return allPlayerStats.Values.ToList();
     }
 
     public void LoadStatsFromHost(int winningTeam, List<PlayerStats> receivedStats)
     {
+        Debug.Log("StatsManager: Nadpisywanie statystyk danymi od Hosta.");
         this.WinningTeam = winningTeam;
-
-        // Czyœcimy lokalne (puste lub niepe³ne) statystyki
         allPlayerStats.Clear();
-
-        // Przepisujemy dane od Hosta do naszego s³ownika
-        foreach (var ps in receivedStats)
+        foreach (var s in receivedStats)
         {
-            allPlayerStats[ps.SteamId] = ps;
+            allPlayerStats[s.SteamId] = s;
         }
-
-        Debug.Log($"StatsManager: Za³adowano statystyki dla {allPlayerStats.Count} graczy od Hosta.");
     }
+
+    public List<PlayerStats> GetAllStats() => allPlayerStats.Values.ToList();
 }

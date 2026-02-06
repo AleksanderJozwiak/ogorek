@@ -26,6 +26,11 @@ public class PlayerHealth : MonoBehaviour, IDamageable
         currentHealth = maxHealth;
         _isAlive = true;
 
+        if (identity != null)
+        {
+            StatsManager.Instance?.RecordRespawn(identity.SteamId);
+        }
+
         if (TryGetComponent(out identity))
             isLocalPlayer = identity.SteamId == SteamUser.GetSteamID();
 
