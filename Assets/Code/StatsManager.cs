@@ -3,6 +3,7 @@ using Steamworks;
 using System.Collections.Generic;
 using System.Linq;
 
+[System.Serializable]
 public class PlayerStats
 {
     public ulong SteamId;
@@ -276,13 +277,27 @@ public class StatsManager : MonoBehaviour
 
     public void LoadStatsFromHost(int winningTeam, List<PlayerStats> receivedStats)
     {
-        Debug.Log("StatsManager: Nadpisywanie statystyk danymi od Hosta.");
+        Debug.Log($"StatsManager: Nadpisywanie statystyk. Zwyciêzca: {winningTeam}");
+
+        if (receivedStats == null)
+        {
+            Debug.LogError("B£¥D KRYTYCZNY: Otrzymano puste statystyki (null) od Hosta!");
+            return;
+        }
+
         this.WinningTeam = winningTeam;
         allPlayerStats.Clear();
+
         foreach (var s in receivedStats)
         {
+            // Poniewa¿ Dictionary nie przechodzi przez sieæ, musimy go zainicjowaæ rêcznie,
+            // ¿eby unikn¹æ b³êdów, gdyby ktoœ próbowa³ go u¿yæ póŸniej.
+            s.DamageContributions = new Dictionary<ulong, float>();
+
             allPlayerStats[s.SteamId] = s;
         }
+
+        Debug.Log($"Pomyœlnie za³adowano statystyki dla {receivedStats.Count} graczy.");
     }
 
     public List<PlayerStats> GetAllStats() => allPlayerStats.Values.ToList();

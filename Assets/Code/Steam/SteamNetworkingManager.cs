@@ -137,6 +137,7 @@ public class SteamNetworkingManager : MonoBehaviour
                         }
 
                         LobbyManager.Instance.LoadScene("Statistics");
+                        Debug.Log("load statistics");
                         break;
                     }
                 }
