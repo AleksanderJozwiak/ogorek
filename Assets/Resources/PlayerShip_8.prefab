@@ -222,7 +222,8 @@ MonoBehaviour:
   shipAcceleration: 6
   shipMaxVelocity: 8
   shipRotationSpeed: 100
-  bulletSpeed: 10
+  shipBrakeStrength: 8
+  bulletSpeed: 12
   bulletSpawn: {fileID: 7990644788345452046}
   trailRenderers:
   - {fileID: 5941153928447005197}

@@ -7,6 +7,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float shipAcceleration = 2f;
     [SerializeField] private float shipMaxVelocity = 3f;
     [SerializeField] private float shipRotationSpeed = 100f;
+    [SerializeField] private float shipBrakeStrength = 5f;
     [SerializeField] private float bulletSpeed = 8f;
 
     [Header("Object references")]
@@ -48,6 +49,21 @@ public class PlayerMovement : MonoBehaviour
     private void FixedUpdate()
     {
         if (!isAlive) return;
+
+        if (Input.GetKey(KeyCode.S))
+        {
+            Vector2 vel = shipRigidbody.linearVelocity;
+
+            if (shipRigidbody.linearVelocity.magnitude < 0.1f)
+            {
+                shipRigidbody.linearVelocity = Vector2.zero;
+            }
+            else if (vel.sqrMagnitude > 0.1f)
+            {
+                Vector2 brakeForce = -vel.normalized * shipBrakeStrength;
+                shipRigidbody.AddForce(brakeForce, ForceMode2D.Force);
+            }
+        }
 
         float rotationDelta = turnInput * shipRotationSpeed * Time.fixedDeltaTime;
         shipRigidbody.MoveRotation(shipRigidbody.rotation + rotationDelta);
@@ -96,8 +112,6 @@ public class PlayerMovement : MonoBehaviour
                 trail.emitting = trail.time > 0f;
             }
         }
-
-        if (Input.GetKey(KeyCode.S)) thrustInput -= 1f;
 
         turnInput = 0f;
         if (Input.GetKey(KeyCode.A)) turnInput += 1f;
